@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+/* Brand colors, usable as bg-forest-green, text-bright-green, etc. */
+@theme {
+  --color-forest-green: #163300;
+  --color-bright-green: #9fe870;
+}
