@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import LiveProvider from '../../components/LiveProvider.jsx'
+import { PLACEHOLDER_SECTIONS } from '../../components/menuSections.js'
 import { useLive } from '../../live.js'
+import Home from '../Home.jsx'
+import NotInPrototype from '../NotInPrototype.jsx'
 import HelperHome from './HelperHome.jsx'
 import HelperPrepare from './HelperPrepare.jsx'
 import HelperStatus from './HelperStatus.jsx'
@@ -9,7 +12,7 @@ import HelperStatus from './HelperStatus.jsx'
 function HelperTransfer() {
   const { id } = useParams()
   const transfer = useLive().transfers.find((x) => x.id === id)
-  if (!transfer) return <Navigate to="/helper" replace />
+  if (!transfer) return <Navigate to="/helper/guided" replace />
   if (['REQUESTED', 'DRAFT'].includes(transfer.status)) {
     return <HelperPrepare key={transfer.id} transfer={transfer} />
   }
@@ -21,7 +24,11 @@ export default function HelperArea() {
   return (
     <LiveProvider role="helper">
       <Routes>
-        <Route index element={<HelperHome />} />
+        <Route index element={<Home />} />
+        <Route path="guided" element={<HelperHome />} />
+        {PLACEHOLDER_SECTIONS.map((section) => (
+          <Route key={section} path={section} element={<NotInPrototype section={section} />} />
+        ))}
         <Route path="transfers/:id" element={<HelperTransfer />} />
         <Route path="*" element={<Navigate to="/helper" replace />} />
       </Routes>

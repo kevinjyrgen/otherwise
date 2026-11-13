@@ -19,7 +19,7 @@ export default function OwnerRequest() {
     setBusy(true)
     try {
       await send('/owner/transfers', { note })
-      navigate('/owner')
+      navigate('/owner/guided')
     } catch (problem) {
       setError(problem.message)
       setBusy(false)
@@ -49,7 +49,7 @@ export default function OwnerRequest() {
         <Button size="lg" onClick={ask} disabled={busy}>
           {t.ask(helper)}
         </Button>
-        <Button size="lg" variant="secondary" to="/owner">
+        <Button size="lg" variant="secondary" to="/owner/guided">
           {t.back}
         </Button>
       </div>

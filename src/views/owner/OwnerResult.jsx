@@ -34,7 +34,7 @@ export default function OwnerResult({ transfer }) {
       )}
 
       <div className="mt-auto pt-8">
-        <Button size="lg" to="/owner">
+        <Button size="lg" to="/owner/guided">
           {t.done}
         </Button>
       </div>

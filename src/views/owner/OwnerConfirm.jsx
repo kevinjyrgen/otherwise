@@ -20,7 +20,7 @@ export default function OwnerConfirm() {
   const page = `/owner/transfers/${id}`
 
   // Only an approved transfer can be confirmed; anything else goes back to its page.
-  if (!transfer) return <Navigate to="/owner" replace />
+  if (!transfer) return <Navigate to="/owner/guided" replace />
   if (transfer.status !== 'APPROVED' && !sending) return <Navigate to={page} replace />
 
   const confirm = async () => {

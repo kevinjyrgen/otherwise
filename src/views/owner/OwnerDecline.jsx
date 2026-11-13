@@ -18,7 +18,7 @@ export default function OwnerDecline() {
   const transfer = transfers.find((x) => x.id === id)
   const page = `/owner/transfers/${id}`
 
-  if (!transfer) return <Navigate to="/owner" replace />
+  if (!transfer) return <Navigate to="/owner/guided" replace />
   if (!['PENDING_APPROVAL', 'APPROVED'].includes(transfer.status) && !busy) {
     return <Navigate to={page} replace />
   }

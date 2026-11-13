@@ -71,7 +71,7 @@ export default function HelperStatus({ transfer }) {
             {t.cancel}
           </Button>
         )}
-        <Button variant="secondary" to="/helper">
+        <Button variant="secondary" to="/helper/guided">
           {t.home}
         </Button>
       </div>
