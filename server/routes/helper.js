@@ -1,6 +1,6 @@
 /**
  * Helper-only routes (mounted behind requireRole('helper')).
- * The helper prepares and submits. There is deliberately no approve, confirm
+ * The helper prepares, submits and can cancel. There is deliberately no approve, confirm
  * or send route here.
  */
 import { Router } from 'express'
@@ -33,6 +33,10 @@ router.put('/transfers/:id', async (req, res) =>
 
 router.post('/transfers/:id/submit', async (req, res) =>
   reply(req, res, await transfers.submit(req.user, req.params.id)),
+)
+
+router.post('/transfers/:id/cancel', (req, res) =>
+  reply(req, res, transfers.cancel(req.user, req.params.id)),
 )
 
 export default router

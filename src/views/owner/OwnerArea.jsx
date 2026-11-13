@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import LiveProvider from '../../components/LiveProvider.jsx'
 import { useLive } from '../../live.js'
 import OwnerConfirm from './OwnerConfirm.jsx'
+import OwnerDecline from './OwnerDecline.jsx'
 import OwnerHome from './OwnerHome.jsx'
 import OwnerRequest from './OwnerRequest.jsx'
 import OwnerResult from './OwnerResult.jsx'
@@ -27,6 +28,7 @@ export default function OwnerArea() {
         <Route path="request" element={<OwnerRequest />} />
         <Route path="transfers/:id" element={<OwnerTransfer />} />
         <Route path="transfers/:id/confirm" element={<OwnerConfirm />} />
+        <Route path="transfers/:id/decline" element={<OwnerDecline />} />
         <Route path="*" element={<Navigate to="/owner" replace />} />
       </Routes>
     </LiveProvider>

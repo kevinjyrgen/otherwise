@@ -66,6 +66,9 @@ export default function OwnerReview({ transfer }) {
         <Button size="lg" onClick={approve} disabled={busy}>
           {t.approve}
         </Button>
+        <Button size="lg" variant="secondary" to={`/owner/transfers/${transfer.id}/decline`}>
+          {t.decline}
+        </Button>
       </div>
     </Shell>
   )

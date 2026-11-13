@@ -29,6 +29,8 @@ export default {
   submit: 'Send for approval',
   submitNote: (owner) => `You cannot send the money. ${owner} checks it and confirms it herself.`,
 
+  cancel: 'Cancel this transfer',
+  cancelQuestion: (owner) => `Cancel this transfer? ${owner} will be told.`,
   next: 'Continue',
   back: 'Back',
 }

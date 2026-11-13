@@ -22,5 +22,7 @@ export default {
   amount: 'Amount',
   recipientGets: 'Recipient gets',
   fee: 'Fee',
+  cancel: 'Cancel transfer',
+  cancelQuestion: (owner) => `Cancel this transfer? ${owner} will no longer be able to confirm it.`,
   home: 'Back to overview',
 }

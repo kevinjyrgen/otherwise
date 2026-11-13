@@ -101,6 +101,12 @@ export default function HelperPrepare({ transfer }) {
       await send(`${path}/submit`)
     })
 
+  /** Drops the request without preparing it; the owner is told. */
+  const cancel = () => {
+    if (!window.confirm(t.cancelQuestion(owner))) return
+    run(() => send(`${path}/cancel`))
+  }
+
   return (
     <Shell>
       <Stepper steps={t.steps} current={step} />
@@ -233,6 +239,9 @@ export default function HelperPrepare({ transfer }) {
             {t.back}
           </Button>
         )}
+        <button type="button" onClick={cancel} disabled={busy} className="min-h-12 text-sm text-white/50 underline">
+          {t.cancel}
+        </button>
       </div>
     </Shell>
   )

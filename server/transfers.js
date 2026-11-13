@@ -26,6 +26,9 @@ export class RuleError extends Error {
   }
 }
 
+/** Reasons the owner can pick when she declines. The client turns them into words. */
+export const DECLINE_REASONS = ['NOT_RECOGNISED', 'WRONG_DETAILS', 'CHANGED_MIND']
+
 /** Confirms that are being paid right now: transfer id → promise. */
 const inFlight = new Map()
 
@@ -53,6 +56,11 @@ function mine(user, id) {
 /** Rejects the action unless the transfer is in one of the allowed statuses. */
 function requireStatus(transfer, allowed, message) {
   if (!allowed.includes(transfer.status)) throw new RuleError(409, message)
+}
+
+/** Once the owner has confirmed and the payment is on its way, nobody can stop it. */
+function requireNotSending(transfer) {
+  if (inFlight.has(transfer.id)) throw new RuleError(409, 'This transfer is being sent right now.')
 }
 
 /** Moves the transfer to a status, saves, and tells both people's windows to refresh. */
@@ -240,6 +248,23 @@ export function approve(owner, id) {
   return transfer
 }
 
+/** Step 8: the owner says no, with one of the fixed reasons. Nothing is sent. */
+export function decline(owner, id, reason) {
+  const transfer = mine(owner, id)
+  requireStatus(
+    transfer,
+    [STATUS.PENDING_APPROVAL, STATUS.APPROVED],
+    'This transfer is not waiting for your answer.',
+  )
+  requireNotSending(transfer)
+  if (!DECLINE_REASONS.includes(reason)) throw new RuleError(400, 'Choose a reason.')
+  transfer.reason = reason
+  setStatus(transfer, STATUS.DECLINED)
+  notify(transfer.ownerId, 'DECLINED', transfer)
+  notify(transfer.helperId, 'DECLINED', transfer)
+  return transfer
+}
+
 /**
  * Steps 9–10: the owner's final confirmation.
  * - Bound to what she saw: the request repeats the IBAN and amount, and it is
@@ -311,5 +336,22 @@ export async function submit(helper, id) {
   await applyQuote(transfer)
   setStatus(transfer, STATUS.PENDING_APPROVAL)
   notify(transfer.ownerId, 'APPROVAL_NEEDED', transfer)
+  return transfer
+}
+
+/**
+ * The helper withdraws the transfer. This is the only thing she can still do
+ * after submitting, and only until the owner has confirmed.
+ */
+export function cancel(helper, id) {
+  const transfer = mine(helper, id)
+  requireStatus(
+    transfer,
+    [STATUS.REQUESTED, STATUS.DRAFT, STATUS.PENDING_APPROVAL, STATUS.APPROVED],
+    'This transfer can no longer be cancelled.',
+  )
+  requireNotSending(transfer)
+  setStatus(transfer, STATUS.CANCELLED)
+  notify(transfer.ownerId, 'CANCELLED', transfer)
   return transfer
 }

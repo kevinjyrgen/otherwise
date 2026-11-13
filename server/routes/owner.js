@@ -23,6 +23,10 @@ router.post('/transfers/:id/approve', (req, res) =>
   reply(req, res, transfers.approve(req.user, req.params.id)),
 )
 
+router.post('/transfers/:id/decline', (req, res) =>
+  reply(req, res, transfers.decline(req.user, req.params.id, req.body?.reason)),
+)
+
 router.post('/transfers/:id/confirm', async (req, res) =>
   reply(req, res, await transfers.confirm(req.user, req.params.id, req.body ?? {})),
 )
