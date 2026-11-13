@@ -1,0 +1,63 @@
+/* Global tokens + a few base classes. Keep page-specific CSS in owner/ or helper/. */
+:root {
+  --forest-green: #163300;
+  --bright-green: #9fe870;
+  --bg: #f7f7f2;
+  --text: #0e0f0c;
+  --muted: #5d6157;
+  --danger: #a8200d;
+  --radius: 16px;
+  --tap: 64px; /* minimum big-button height */
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-text-size-adjust: 100%;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100svh; }
+h1 { font-size: 1.8rem; margin: 0 0 0.5rem; }
+
+.screen {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100svh;
+  padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.center { justify-content: center; text-align: center; }
+.muted { color: var(--muted); }
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 24px;
+  border: 0;
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-yes { background: var(--bright-green); color: var(--forest-green); }
+.btn-no { background: var(--danger); color: #fff; }
+.btn-secondary { background: var(--forest-green); color: #fff; }
+
+pre.debug {
+  text-align: left;
+  font-size: 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
