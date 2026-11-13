@@ -1,36 +1,77 @@
-import { useEffect, useState } from 'react'
-import { api, USER_ID } from '../../api.js'
+import { Link } from 'react-router-dom'
+import Button from '../../components/Button.jsx'
 import Shell from '../../components/Shell.jsx'
-import { useSocket } from '../../socket.js'
+import { formatMoney } from '../../format.js'
+import { useLive } from '../../live.js'
 import t from './OwnerHome.strings.js'
 
-/** Formats an amount the way the owner reads it, e.g. "1,240.50 EUR". */
-function formatMoney(amount, currency) {
-  return `${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`
-}
+const WAITING = ['PENDING_APPROVAL', 'APPROVED']
+const PREPARING = ['REQUESTED', 'DRAFT']
 
-/** Owner's home screen. Empty for now: greeting and balance only. */
+/**
+ * Owner's home screen. Shows one thing to do at a time: a transfer waiting
+ * for her answer comes first; otherwise she can ask for a new one.
+ */
 export default function OwnerHome() {
-  const { connected } = useSocket(USER_ID.owner)
-  const [me, setMe] = useState(null)
-
-  useEffect(() => {
-    api(USER_ID.owner, '/me').then(setMe).catch(console.error)
-  }, [])
+  const { me, transfers } = useLive()
+  const waiting = transfers.filter((x) => WAITING.includes(x.status))
+  const preparing = transfers.filter((x) => PREPARING.includes(x.status))
+  const earlier = transfers.filter((x) => t.status[x.status]).slice(0, 3)
 
   return (
-    <Shell connected={connected} connectionLabel={connected ? t.live : t.offline}>
-      {me && (
-        <>
-          <h1 className="mt-8 text-4xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
-          <section className="mt-8 rounded-3xl bg-card p-6">
-            <p className="text-xl text-white/60">{t.balanceLabel}</p>
-            <p className="mt-2 text-[40px] leading-tight font-extrabold tracking-tight">
-              {formatMoney(me.balance, me.currency)}
-            </p>
-          </section>
-          <p className="mt-8 text-xl text-white/60">{t.empty}</p>
-        </>
+    <Shell>
+      <h1 className="mt-4 text-4xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
+
+      <section className="mt-6 rounded-3xl bg-card p-6">
+        <p className="text-xl text-white/60">{t.balanceLabel}</p>
+        <p className="mt-1 text-[40px] leading-tight font-extrabold tracking-tight">
+          {formatMoney(me.balance, me.currency)}
+        </p>
+      </section>
+
+      {waiting.map((transfer) => (
+        <section key={transfer.id} className="mt-6 rounded-3xl bg-card p-6 ring-2 ring-bright-green">
+          <h2 className="text-2xl font-bold">{t.waitingTitle(me.helperName)}</h2>
+          <p className="mt-2 text-xl text-white/80">“{transfer.description}”</p>
+          <Button size="lg" className="mt-5" to={`/owner/transfers/${transfer.id}`}>
+            {t.look}
+          </Button>
+        </section>
+      ))}
+
+      {waiting.length === 0 && (
+        <section className="mt-8">
+          <h2 className="text-2xl font-bold">{t.askTitle}</h2>
+          <p className="mt-2 text-xl text-white/70">{t.askText(me.helperName)}</p>
+          <Button size="lg" className="mt-5" to="/owner/request">
+            {t.ask}
+          </Button>
+        </section>
+      )}
+
+      {preparing.map((transfer) => (
+        <p key={transfer.id} className="mt-6 rounded-3xl bg-card p-6 text-xl text-white/80">
+          {t.preparing(me.helperName)}
+        </p>
+      ))}
+
+      {earlier.length > 0 && (
+        <section className="mt-10">
+          <h2 className="text-xl font-bold text-white/60">{t.recentTitle}</h2>
+          <ul className="mt-2 divide-y divide-white/10">
+            {earlier.map((transfer) => (
+              <li key={transfer.id}>
+                <Link
+                  to={`/owner/transfers/${transfer.id}`}
+                  className="flex min-h-16 items-center justify-between gap-4 py-3 text-xl"
+                >
+                  <span className="truncate">{transfer.description || t.noDescription}</span>
+                  <span className="shrink-0 text-white/60">{t.status[transfer.status]}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </Shell>
   )

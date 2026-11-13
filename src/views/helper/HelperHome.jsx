@@ -1,25 +1,59 @@
-import { useEffect, useState } from 'react'
-import { api, USER_ID } from '../../api.js'
+import { Link } from 'react-router-dom'
+import Button from '../../components/Button.jsx'
 import Shell from '../../components/Shell.jsx'
-import { useSocket } from '../../socket.js'
+import { formatMoney } from '../../format.js'
+import { useLive } from '../../live.js'
 import t from './HelperHome.strings.js'
 
-/** Helper's home screen. Empty for now: greeting and who she helps. */
-export default function HelperHome() {
-  const { connected } = useSocket(USER_ID.helper)
-  const [me, setMe] = useState(null)
+const TODO = ['REQUESTED', 'DRAFT']
 
-  useEffect(() => {
-    api(USER_ID.helper, '/me').then(setMe).catch(console.error)
-  }, [])
+/** Helper's home: requests to prepare on top, everything she handed over below. */
+export default function HelperHome() {
+  const { me, transfers } = useLive()
+  const todo = transfers.filter((x) => TODO.includes(x.status))
+  const others = transfers.filter((x) => !TODO.includes(x.status))
 
   return (
-    <Shell connected={connected} connectionLabel={connected ? t.live : t.offline}>
-      {me && (
+    <Shell>
+      <h1 className="mt-4 text-3xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
+      <p className="mt-2 text-white/60">{t.helping(me.ownerName)}</p>
+
+      <h2 className="mt-8 font-bold text-white/60">{t.todoTitle}</h2>
+      {todo.length === 0 && (
+        <p className="mt-3 rounded-3xl bg-card p-5 text-white/60">{t.todoEmpty}</p>
+      )}
+      {todo.map((transfer) => (
+        <section key={transfer.id} className="mt-3 rounded-3xl bg-card p-5">
+          <p className="text-lg font-bold">{t.requested(transfer.ownerName)}</p>
+          {transfer.note && <p className="mt-1 text-white/70">“{transfer.note}”</p>}
+          <Button className="mt-4" to={`/helper/transfers/${transfer.id}`}>
+            {transfer.status === 'DRAFT' ? t.resume : t.start}
+          </Button>
+        </section>
+      ))}
+
+      {others.length > 0 && (
         <>
-          <h1 className="mt-8 text-3xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
-          <p className="mt-2 text-white/60">{t.helping(me.ownerName)}</p>
-          <section className="mt-8 rounded-3xl bg-card p-6 text-white/60">{t.empty}</section>
+          <h2 className="mt-8 font-bold text-white/60">{t.otherTitle}</h2>
+          <ul className="mt-3 divide-y divide-white/10 rounded-3xl bg-card px-5">
+            {others.map((transfer) => (
+              <li key={transfer.id}>
+                <Link to={`/helper/transfers/${transfer.id}`} className="flex items-center justify-between gap-4 py-4">
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">
+                      {transfer.description || t.untitled}
+                    </span>
+                    {transfer.sourceAmount && (
+                      <span className="text-sm text-white/60">
+                        {formatMoney(transfer.sourceAmount, transfer.sourceCurrency)}
+                      </span>
+                    )}
+                  </span>
+                  <span className="shrink-0 text-sm text-white/60">{t.status[transfer.status]}</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </>
       )}
     </Shell>
