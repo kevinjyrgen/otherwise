@@ -7,6 +7,14 @@ import t from './HelperHome.strings.js'
 
 const TODO = ['REQUESTED', 'DRAFT']
 
+/** Pill colours per status; anything not listed is neutral grey. */
+const pill = {
+  PENDING_APPROVAL: 'bg-bright-green/15 text-bright-green',
+  APPROVED: 'bg-bright-green/15 text-bright-green',
+  SENT: 'bg-bright-green text-forest-green',
+  FAILED: 'bg-red-400/20 text-red-300',
+}
+
 /** Helper's home: requests to prepare on top, everything she handed over below. */
 export default function HelperHome() {
   const { me, transfers } = useLive()
@@ -49,7 +57,9 @@ export default function HelperHome() {
                       </span>
                     )}
                   </span>
-                  <span className="shrink-0 text-sm text-white/60">{t.status[transfer.status]}</span>
+                  <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold ${pill[transfer.status] ?? 'bg-white/10 text-white/70'}`}>
+                    {t.status[transfer.status]}
+                  </span>
                 </Link>
               </li>
             ))}

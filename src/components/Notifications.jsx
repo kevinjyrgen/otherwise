@@ -23,7 +23,7 @@ export function Toast() {
   if (!toast) return null
   const big = role === 'owner'
   return (
-    <div className="fixed inset-x-0 top-3 z-20 mx-auto w-full max-w-[430px] px-3">
+    <div className="fixed inset-x-0 top-3 z-20 mx-auto w-full max-w-[430px] animate-toast px-3">
       <button
         type="button"
         role="alert"
@@ -31,7 +31,7 @@ export function Toast() {
           dismissToast()
           navigate(linkFor(role, toast))
         }}
-        className={`w-full rounded-3xl bg-bright-green px-5 py-4 text-left font-semibold text-forest-green shadow-2xl ${big ? 'text-xl' : 'text-base'}`}
+        className={`w-full rounded-3xl bg-bright-green px-5 py-4 text-left font-semibold text-forest-green shadow-2xl shadow-black/60 ${big ? 'text-xl' : 'text-base'}`}
       >
         {notificationText(role, toast)}
       </button>
@@ -75,7 +75,7 @@ export function Bell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2.5rem)] rounded-3xl bg-card p-2 shadow-2xl">
+        <div className="absolute right-0 z-10 mt-2 w-80 max-w-[calc(100vw-2.5rem)] rounded-3xl bg-card-hover p-2 shadow-2xl shadow-black/60">
           {notifications.length === 0 && <p className="p-4 text-white/60">{t.empty}</p>}
           {notifications.slice(0, 8).map((n) => (
             <button
@@ -85,7 +85,7 @@ export function Bell() {
                 setOpen(false)
                 navigate(linkFor(role, n))
               }}
-              className="block w-full rounded-2xl px-4 py-3 text-left hover:bg-card-hover"
+              className={`block w-full rounded-2xl px-4 py-3 text-left hover:bg-white/10 ${n.read ? "text-white/70" : "font-semibold"}`}
             >
               {notificationText(role, n)}
             </button>

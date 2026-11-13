@@ -2,6 +2,7 @@ import Button from '../../components/Button.jsx'
 import { reasonText } from '../../components/notifications.strings.js'
 import Shell from '../../components/Shell.jsx'
 import { formatMoney } from '../../format.js'
+import StatusIcon from '../../components/StatusIcon.jsx'
 import t from './OwnerResult.strings.js'
 
 /**
@@ -20,7 +21,10 @@ export default function OwnerResult({ transfer }) {
 
   return (
     <Shell>
-      <h1 className="mt-10 text-4xl font-extrabold tracking-tight">{t.title[status](helper)}</h1>
+      <div className="mt-10">
+        <StatusIcon status={status} big />
+      </div>
+      <h1 className="mt-6 text-4xl font-extrabold tracking-tight">{t.title[status](helper)}</h1>
       {reasonText.owner[transfer.reason] && (
         <p className="mt-4 text-2xl">{reasonText.owner[transfer.reason]}</p>
       )}

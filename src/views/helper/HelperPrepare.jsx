@@ -122,13 +122,13 @@ export default function HelperPrepare({ transfer }) {
           <h1 className="mt-6 text-2xl font-extrabold tracking-tight">{t.amountTitle}</h1>
           <label className="mt-5 block text-sm text-white/70">
             {t.youSend(owner)}
-            <div className="mt-2 flex items-center rounded-xl bg-card pr-4">
+            <div className="mt-2 flex items-center rounded-xl border border-white/10 bg-card pr-4 focus-within:border-bright-green">
               <input
                 inputMode="decimal"
                 value={form.amount}
                 onChange={set('amount')}
                 placeholder="0.00"
-                className="min-h-16 w-full bg-transparent px-4 text-3xl font-bold text-white placeholder:text-white/30 focus:outline-none"
+                className="min-h-16 w-full border-0 bg-transparent px-4 text-3xl font-bold text-white placeholder:text-white/30 focus:outline-none"
               />
               <span className="text-xl font-bold text-white">{transfer.sourceCurrency}</span>
             </div>
@@ -142,7 +142,7 @@ export default function HelperPrepare({ transfer }) {
               <select
                 value={form.currency}
                 onChange={set('currency')}
-                className="bg-card text-xl font-bold text-white"
+                className="rounded-lg border-0 bg-card py-2 text-xl font-bold text-white"
               >
                 {currencies.map((code) => (
                   <option key={code}>{code}</option>

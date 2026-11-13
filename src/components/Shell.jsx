@@ -13,7 +13,7 @@ export default function Shell({ children }) {
   return (
     <div className="min-h-svh bg-ink text-white">
       {live && <Toast />}
-      <div className="mx-auto flex min-h-svh max-w-[430px] flex-col px-5 pb-8">
+      <div className="mx-auto flex min-h-svh max-w-[430px] flex-col px-5 pb-8 sm:border-x sm:border-white/5">
         <header className="flex min-h-20 items-center justify-between py-4">
           <Link to={live ? `/${live.role}` : '/'}>
             <Wordmark />

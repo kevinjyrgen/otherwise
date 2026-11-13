@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Avatar from '../../components/Avatar.jsx'
 import Button from '../../components/Button.jsx'
 import Rows from '../../components/Rows.jsx'
 import Shell from '../../components/Shell.jsx'
@@ -35,8 +36,11 @@ export default function OwnerReview({ transfer }) {
       <h1 className="mt-4 text-4xl font-extrabold tracking-tight">{t.title}</h1>
 
       <section className="mt-6 rounded-3xl bg-card p-6">
-        <p className="text-lg text-white/60">{t.preparedBy(transfer.helperName)}</p>
-        <p className="mt-2 text-2xl font-semibold">“{transfer.description}”</p>
+        <div className="flex items-center gap-3">
+          <Avatar name={transfer.helperName} />
+          <p className="text-lg text-white/60">{t.preparedBy(transfer.helperName)}</p>
+        </div>
+        <p className="mt-4 text-2xl font-semibold">“{transfer.description}”</p>
       </section>
 
       <section className="mt-4 rounded-3xl bg-card px-6 py-2">

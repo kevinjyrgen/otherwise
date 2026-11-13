@@ -5,6 +5,7 @@ import Rows from '../../components/Rows.jsx'
 import Shell from '../../components/Shell.jsx'
 import { formatIban, formatMoney } from '../../format.js'
 import { useLive } from '../../live.js'
+import StatusIcon from '../../components/StatusIcon.jsx'
 import t from './HelperStatus.strings.js'
 
 const WAITING = ['PENDING_APPROVAL', 'APPROVED']
@@ -37,7 +38,9 @@ export default function HelperStatus({ transfer }) {
   return (
     <Shell>
       <div className="mt-6 flex items-center gap-3">
-        {waiting && <span className="h-3 w-3 shrink-0 animate-pulse rounded-full bg-bright-green" />}
+        <span className={waiting ? 'animate-pulse' : ''}>
+          <StatusIcon status={status} />
+        </span>
         <h1 className="text-2xl font-extrabold tracking-tight">{t.title[status](owner)}</h1>
       </div>
       {reasonText.helper[transfer.reason] && (

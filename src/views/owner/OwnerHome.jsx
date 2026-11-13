@@ -22,8 +22,8 @@ export default function OwnerHome() {
     <Shell>
       <h1 className="mt-4 text-4xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
 
-      <section className="mt-6 rounded-3xl bg-card p-6">
-        <p className="text-xl text-white/60">{t.balanceLabel}</p>
+      <section className="mt-6 rounded-3xl bg-forest-green p-6">
+        <p className="text-xl text-bright-green">{t.balanceLabel}</p>
         <p className="mt-1 text-[40px] leading-tight font-extrabold tracking-tight">
           {formatMoney(me.balance, me.currency)}
         </p>
