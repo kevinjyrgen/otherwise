@@ -2,7 +2,7 @@
 export default {
   title: 'Who is using this window?',
   subtitle: 'Demo only. Both people already have an account.',
-  ownerName: 'Valentina',
+  ownerName: 'Tiiu',
   ownerRole: 'Account owner',
   helperName: 'Mari Tamm',
   helperRole: 'Trusted helper',

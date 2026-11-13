@@ -35,7 +35,7 @@ async function call(user, method, path, body) {
   })
   return { status: response.status, body: await response.json() }
 }
-const owner = (method, path, body) => call('valentina', method, path, body)
+const owner = (method, path, body) => call('tiiu', method, path, body)
 const helper = (method, path, body) => call('mari', method, path, body)
 
 /** Owner requests, helper fills everything in. Returns the transfer id (status DRAFT). */
@@ -72,7 +72,7 @@ test('happy path ends in SENT and takes amount + fee from the balance', async ()
   const { status, body } = await owner('POST', `/owner/transfers/${id}/confirm`, confirmBody)
   assert.equal(status, 200)
   assert.equal(body.status, 'SENT')
-  assert.equal(db.users.valentina.balance, 1240.5 - 250.35)
+  assert.equal(db.users.tiiu.balance, 1240.5 - 250.35)
 })
 
 test('the helper has no way to approve, decline or confirm', async () => {
@@ -114,7 +114,7 @@ test('confirm is rejected when the IBAN or amount differ from the stored transfe
   assert.equal((await owner('POST', path, { iban: 'GB82WEST12345698765432', amount: 250 })).status, 409)
   assert.equal((await owner('POST', path, {})).status, 409)
   assert.equal(db.transfers[0].status, 'APPROVED')
-  assert.equal(db.users.valentina.balance, 1240.5)
+  assert.equal(db.users.tiiu.balance, 1240.5)
 })
 
 test('confirm needs an approval first', async () => {
@@ -136,7 +136,7 @@ test('a double tap on confirm makes one transfer', async () => {
     assert.equal(answer.body.status, 'SENT')
   }
   // Money left the account once.
-  assert.equal(db.users.valentina.balance, 1240.5 - 250.35)
+  assert.equal(db.users.tiiu.balance, 1240.5 - 250.35)
 })
 
 test('the helper never sees the balance or other details of the owner', async () => {
@@ -167,7 +167,7 @@ test('a rejected payment ends in FAILED and no money leaves', async () => {
   const { body } = await owner('POST', `/owner/transfers/${id}/confirm`, confirmBody)
   assert.equal(body.status, 'FAILED')
   assert.equal(body.reason, 'PAYMENT_REJECTED')
-  assert.equal(db.users.valentina.balance, 1240.5)
+  assert.equal(db.users.tiiu.balance, 1240.5)
   assert.equal((await helper('GET', '/notifications')).body[0].kind, 'FAILED')
 })
 

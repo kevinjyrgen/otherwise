@@ -23,9 +23,9 @@ export const STATUS = Object.freeze({
 export function seedData() {
   return {
     users: {
-      valentina: {
-        id: 'valentina',
-        name: 'Valentina',
+      tiiu: {
+        id: 'tiiu',
+        name: 'Tiiu',
         role: 'owner',
         balance: 1240.5,
         currency: 'EUR',
@@ -35,7 +35,7 @@ export function seedData() {
         id: 'mari',
         name: 'Mari Tamm',
         role: 'helper',
-        ownerId: 'valentina',
+        ownerId: 'tiiu',
       },
     },
     // Filled from milestone 2 on. Shape of a transfer:

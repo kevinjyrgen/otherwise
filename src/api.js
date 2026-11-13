@@ -6,7 +6,7 @@
  */
 
 /** Demo user behind each role. */
-export const USER_ID = { owner: 'valentina', helper: 'mari' }
+export const USER_ID = { owner: 'tiiu', helper: 'mari' }
 
 /**
  * Calls the API as the given user.
