@@ -7,6 +7,7 @@ export default {
     recipients: { label: 'Recipients', short: 'Recipients' },
     payments: { label: 'Payments', short: 'Payments' },
     guided: { label: 'Guided Transfers', short: 'Guided' },
+    helper: { label: 'Helper', short: 'Helper' },
     account: { label: 'Account', short: 'Account' },
   },
   newBadge: 'New',

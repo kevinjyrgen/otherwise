@@ -34,7 +34,8 @@ export default function HelperPrepare({ transfer }) {
   const owner = transfer.ownerName
   const [step, setStep] = useState(0)
   const [form, setForm] = useState({
-    amount: transfer.sourceAmount ? String(transfer.sourceAmount) : '',
+    // "Send money" requests come with the amount the owner wanted.
+    amount: String(transfer.sourceAmount ?? transfer.requestedAmount ?? ''),
     currency: transfer.targetCurrency,
     name: transfer.recipient.name,
     iban: transfer.recipient.iban,
@@ -43,6 +44,7 @@ export default function HelperPrepare({ transfer }) {
   })
   const [currencies, setCurrencies] = useState([transfer.targetCurrency])
   const [quote, setQuote] = useState(null)
+  const [balance, setBalance] = useState(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
@@ -53,6 +55,13 @@ export default function HelperPrepare({ transfer }) {
   useEffect(() => {
     call('/helper/currencies').then(setCurrencies).catch(console.error)
   }, [call])
+
+  // The owner's balance: the server only gives it while this transfer is being prepared.
+  useEffect(() => {
+    call(`${path}/balance`)
+      .then(setBalance)
+      .catch(() => setBalance(null))
+  }, [call, path, transfer.updatedAt])
 
   // Live quote while typing, slightly delayed so not every keystroke asks the server.
   useEffect(() => {
@@ -150,6 +159,15 @@ export default function HelperPrepare({ transfer }) {
               </select>
             </div>
           </label>
+
+          {balance && (
+            <p className="mt-3 text-sm text-white/60">
+              {t.balance(owner, formatMoney(balance.balance, balance.currency))}
+              {shownQuote && shownQuote.total > balance.balance && (
+                <span className="mt-1 block font-semibold text-red-300">{t.tooMuch(owner)}</span>
+              )}
+            </p>
+          )}
 
           {shownQuote && (
             <div className="mt-5 rounded-2xl bg-card px-4">

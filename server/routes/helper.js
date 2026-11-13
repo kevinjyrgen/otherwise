@@ -5,6 +5,7 @@
  */
 import { Router } from 'express'
 import { CURRENCIES, getQuote } from '../payments/index.js'
+import * as links from '../links.js'
 import * as transfers from '../transfers.js'
 
 const router = Router()
@@ -38,5 +39,22 @@ router.post('/transfers/:id/submit', async (req, res) =>
 router.post('/transfers/:id/cancel', (req, res) =>
   reply(req, res, transfers.cancel(req.user, req.params.id)),
 )
+
+/** The owner's balance: only while preparing a transfer she asked for, else 403. */
+router.get('/transfers/:id/balance', (req, res) =>
+  res.json(transfers.balanceFor(req.user, req.params.id)),
+)
+
+// ---- invitations: only the invited person can answer.
+
+router.post('/invitations/:id/accept', (req, res) => {
+  links.accept(req.user, req.params.id)
+  res.json({ ok: true })
+})
+
+router.post('/invitations/:id/decline', (req, res) => {
+  links.declineInvitation(req.user, req.params.id)
+  res.json({ ok: true })
+})
 
 export default router

@@ -3,6 +3,7 @@ import Button from '../components/Button.jsx'
 import Shell from '../components/Shell.jsx'
 import { formatMoney } from '../format.js'
 import { useLive } from '../live.js'
+import Invitations from './helper/Invitations.jsx'
 import t from './Home.strings.js'
 
 /** One balance card: currency badge on top, amount below. */
@@ -47,6 +48,16 @@ function ActivityRow({ title, detail, amount, currency }) {
   )
 }
 
+/** Chooses the card that leads into Guided Transfers for this person's situation. */
+function pickPromo(isOwner, me, other) {
+  if (!isOwner) {
+    if (!other) return t.promo.helperNoOwner
+    return { ...t.promo.helper, title: t.promo.helper.title(other), to: '/helper/guided' }
+  }
+  if (other) return { ...t.promo.owner, text: t.promo.owner.text(other), to: '/owner/guided' }
+  return { ...(me.link ? t.promo.ownerWaiting : t.promo.ownerNoHelper), to: '/owner/helper' }
+}
+
 /**
  * Mock app home page, shown right after "logging in": the person's name,
  * their balances, a way into Guided Transfers and recent activity.
@@ -55,8 +66,9 @@ function ActivityRow({ title, detail, amount, currency }) {
 export default function Home() {
   const { role, me, transfers } = useLive()
   const isOwner = role === 'owner'
-  const promo = t.promo[role]
-  const other = (isOwner ? me.helperName : me.ownerName).split(' ')[0]
+  // Who the other person is, if the link between them is active.
+  const other = (isOwner ? me.helperName : me.ownerName)?.split(' ')[0]
+  const promo = pickPromo(isOwner, me, other)
 
   // Owner: her real EUR balance first, then the mock ones. Helper: mock only.
   const balances = [
@@ -70,7 +82,7 @@ export default function Home() {
         .filter((x) => x.status === 'SENT')
         .map((x) => ({
           title: x.recipient.name,
-          detail: `${t.guidedTransfer} · ${x.description}`,
+          detail: x.direct ? t.sentByYou : `${t.guidedTransfer} · ${x.description}`,
           amount: -x.total,
           currency: x.sourceCurrency,
         }))
@@ -92,14 +104,23 @@ export default function Home() {
         ))}
       </ul>
 
-      <section className="mt-6 rounded-3xl bg-card p-5 ring-1 ring-bright-green/40">
-        <h2 className="text-xl font-bold">
-          {typeof promo.title === 'function' ? promo.title(other) : promo.title}
-        </h2>
-        <p className="mt-1 text-white/70">{promo.text(other)}</p>
-        <Button className="mt-4" to={`/${role}/guided`}>
-          {promo.button}
+      {isOwner && (
+        <Button className="mt-5" to="/owner/send">
+          {t.sendMoney}
         </Button>
+      )}
+
+      {/* Invites arrive live and must be visible on the home page. */}
+      {!isOwner && <Invitations />}
+
+      <section className="mt-6 rounded-3xl bg-card p-5 ring-1 ring-bright-green/40">
+        <h2 className="text-xl font-bold">{promo.title}</h2>
+        <p className="mt-1 text-white/70">{promo.text}</p>
+        {promo.button && (
+          <Button className="mt-4" variant={isOwner ? 'secondary' : 'primary'} to={promo.to}>
+            {promo.button}
+          </Button>
+        )}
       </section>
 
       <h2 className="mt-8 font-bold text-white/60">{t.activity}</h2>

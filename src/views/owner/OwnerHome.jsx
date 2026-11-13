@@ -31,7 +31,7 @@ export default function OwnerHome() {
 
       {waiting.map((transfer) => (
         <section key={transfer.id} className="mt-6 rounded-3xl bg-card p-6 ring-2 ring-bright-green">
-          <h2 className="text-2xl font-bold">{t.waitingTitle(me.helperName)}</h2>
+          <h2 className="text-2xl font-bold">{t.waitingTitle(transfer.helperName)}</h2>
           <p className="mt-2 text-xl text-white/80">“{transfer.description}”</p>
           <Button size="lg" className="mt-5" to={`/owner/transfers/${transfer.id}`}>
             {t.look}
@@ -39,7 +39,7 @@ export default function OwnerHome() {
         </section>
       ))}
 
-      {waiting.length === 0 && (
+      {waiting.length === 0 && me.helperName && (
         <section className="mt-8">
           <h2 className="text-2xl font-bold">{t.askTitle}</h2>
           <p className="mt-2 text-xl text-white/70">{t.askText(me.helperName)}</p>
@@ -49,9 +49,20 @@ export default function OwnerHome() {
         </section>
       )}
 
+      {/* Without an active helper nothing can be prepared: lead her to the Helper page. */}
+      {waiting.length === 0 && !me.helperName && (
+        <section className="mt-8">
+          <h2 className="text-2xl font-bold">{t.noHelperTitle}</h2>
+          <p className="mt-2 text-xl text-white/70">{t.noHelperText}</p>
+          <Button size="lg" className="mt-5" to="/owner/helper">
+            {me.link ? t.seeHelper : t.addHelper}
+          </Button>
+        </section>
+      )}
+
       {preparing.map((transfer) => (
         <p key={transfer.id} className="mt-6 rounded-3xl bg-card p-6 text-xl text-white/80">
-          {t.preparing(me.helperName)}
+          {t.preparing(transfer.helperName.split(' ')[0])}
         </p>
       ))}
 

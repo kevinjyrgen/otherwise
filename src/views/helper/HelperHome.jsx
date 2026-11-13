@@ -3,6 +3,7 @@ import Button from '../../components/Button.jsx'
 import Shell from '../../components/Shell.jsx'
 import { formatMoney } from '../../format.js'
 import { useLive } from '../../live.js'
+import Invitations from './Invitations.jsx'
 import t from './HelperHome.strings.js'
 
 const TODO = ['REQUESTED', 'DRAFT']
@@ -24,7 +25,9 @@ export default function HelperHome() {
   return (
     <Shell>
       <h1 className="mt-4 text-3xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
-      <p className="mt-2 text-white/60">{t.helping(me.ownerName)}</p>
+      <p className="mt-2 text-white/60">{me.ownerName ? t.helping(me.ownerName) : t.notHelping}</p>
+
+      <Invitations />
 
       <h2 className="mt-8 font-bold text-white/60">{t.todoTitle}</h2>
       {todo.length === 0 && (
@@ -32,7 +35,11 @@ export default function HelperHome() {
       )}
       {todo.map((transfer) => (
         <section key={transfer.id} className="mt-3 rounded-3xl bg-card p-5">
-          <p className="text-lg font-bold">{t.requested(transfer.ownerName)}</p>
+          <p className="text-lg font-bold">
+            {transfer.requestedAmount
+              ? t.requestedAmount(transfer.ownerName, formatMoney(transfer.requestedAmount, transfer.sourceCurrency))
+              : t.requested(transfer.ownerName)}
+          </p>
           {transfer.note && <p className="mt-1 text-white/70">“{transfer.note}”</p>}
           <Button className="mt-4" to={`/helper/transfers/${transfer.id}`}>
             {transfer.status === 'DRAFT' ? t.resume : t.start}

@@ -10,17 +10,35 @@ export default {
   balances: 'Your balances',
   activity: 'Recent activity',
   guidedTransfer: 'Guided transfer',
+  sentByYou: 'Sent by you · Today',
 
+  sendMoney: 'Send money',
+
+  /** Card that leads into Guided Transfers, per role and per helper situation. */
   promo: {
     owner: {
       title: 'Want a hand with a transfer?',
       text: (helper) => `${helper} can prepare it. You check it and send it yourself.`,
       button: 'Open Guided Transfers',
     },
+    ownerNoHelper: {
+      title: 'Would you like a helper?',
+      text: 'Someone you trust can prepare transfers for you. You always send the money yourself.',
+      button: 'Add a helper',
+    },
+    ownerWaiting: {
+      title: 'Your helper invite',
+      text: 'See if your helper has answered.',
+      button: 'Open Helper',
+    },
     helper: {
       title: (owner) => `You help ${owner} with transfers`,
-      text: () => 'You prepare them. Only she can send the money.',
+      text: 'You prepare them. Only she can send the money.',
       button: 'Open Guided Transfers',
+    },
+    helperNoOwner: {
+      title: 'You are not helping anyone yet',
+      text: 'When someone asks you to be their helper, the invite shows up here.',
     },
   },
 

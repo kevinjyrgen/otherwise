@@ -6,7 +6,7 @@ export default {
     SENT: () => 'The money was sent',
     FAILED: () => 'The money was not sent',
     DECLINED: () => 'You said no',
-    CANCELLED: (helper) => `${helper} cancelled this transfer`,
+    CANCELLED: () => 'This transfer was cancelled',
   },
   text: {
     REQUESTED: () => 'We will tell you when it is ready to check.',
@@ -15,6 +15,10 @@ export default {
     FAILED: () => 'No money left your account.',
     DECLINED: (x) => `No money was sent. ${x.helper} has been told.`,
     CANCELLED: () => 'No money was sent.',
+  },
+  /** Same, for a transfer she sent on her own (no helper involved). */
+  textDirect: {
+    SENT: (x) => `${x.amount} is on its way to ${x.recipient}.`,
   },
   arrives: (days) => (days === 0 ? 'It arrives today.' : 'It arrives on the next working day.'),
   done: 'Done',

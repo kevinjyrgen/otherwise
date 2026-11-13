@@ -3,6 +3,8 @@
  * `x-user-id` header and the server looks the role up itself. The role is
  * never taken from the client.
  */
+import { activeLinkAsHelper, currentLink, invitationsFor, ownerLinkView } from './links.js'
+import { LINK } from './seed.js'
 import { db } from './store.js'
 
 /** Express middleware: resolves req.user or answers 401. */
@@ -32,16 +34,26 @@ export function requireRole(role) {
  */
 export function selfView(user) {
   if (user.role === 'owner') {
-    const helper = db.users[user.helperId]
+    const link = currentLink(user.id)
     return {
       id: user.id,
       name: user.name,
       role: user.role,
       balance: user.balance,
       currency: user.currency,
-      helperName: helper.name,
+      // Her helper link in any live state (invited, active, declined), or null.
+      link: ownerLinkView(link),
+      // Set only when the helper is ACTIVE, i.e. can really prepare transfers.
+      helperName: link?.status === LINK.ACTIVE ? db.users[link.helperId].name : null,
     }
   }
-  const owner = db.users[user.ownerId]
-  return { id: user.id, name: user.name, role: user.role, ownerName: owner.name }
+  const active = activeLinkAsHelper(user.id)
+  return {
+    id: user.id,
+    name: user.name,
+    role: user.role,
+    // Who she helps right now, or null.
+    ownerName: active ? db.users[active.ownerId].name : null,
+    invitations: invitationsFor(user.id),
+  }
 }

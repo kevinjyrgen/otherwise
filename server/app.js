@@ -10,7 +10,7 @@ import { attach, emitAll, userRoom } from './events.js'
 import helperRoutes from './routes/helper.js'
 import ownerRoutes from './routes/owner.js'
 import { db, reset, save } from './store.js'
-import { RuleError } from './transfers.js'
+import { RuleError } from './errors.js'
 
 /** @returns {{app: import('express').Express, httpServer: import('node:http').Server}} */
 export function createApp() {
@@ -32,9 +32,10 @@ export function createApp() {
 
   app.get('/api/health', (req, res) => res.json({ ok: true }))
 
-  // Demo only: used by `npm run reset` to reload a running server.
+  // Demo only: used by `npm run reset` and the two reset buttons on /demo.
+  // scenario "no-helper" starts without a helper; anything else has Mari active.
   app.post('/api/dev/reset', (req, res) => {
-    reset()
+    reset({ withHelper: req.body?.scenario !== 'no-helper' })
     emitAll('reset')
     res.json({ ok: true })
   })

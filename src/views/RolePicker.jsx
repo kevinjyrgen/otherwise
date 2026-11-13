@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from '../components/Avatar.jsx'
+import Button from '../components/Button.jsx'
 import Shell from '../components/Shell.jsx'
 import t from './RolePicker.strings.js'
 
@@ -22,8 +24,24 @@ function RoleCard({ to, name, role }) {
   )
 }
 
-/** Landing screen: pick which demo user this window is. */
+/** Landing screen: pick which demo user this window is, or reset the demo to a starting point. */
 export default function RolePicker() {
+  const [message, setMessage] = useState('')
+
+  /** Reseeds the server; open windows refresh by themselves. */
+  const reset = async (scenario) => {
+    try {
+      const response = await fetch('/api/dev/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scenario }),
+      })
+      setMessage(response.ok ? t.resetDone : t.resetFailed)
+    } catch {
+      setMessage(t.resetFailed)
+    }
+  }
+
   return (
     <Shell>
       <h1 className="mt-10 text-4xl font-extrabold tracking-tight">{t.title}</h1>
@@ -32,6 +50,23 @@ export default function RolePicker() {
         <RoleCard to="/owner" name={t.ownerName} role={t.ownerRole} />
         <RoleCard to="/helper" name={t.helperName} role={t.helperRole} />
       </div>
+
+      <h2 className="mt-12 font-bold text-white/60">{t.resetTitle}</h2>
+      <div className="mt-3 flex flex-col gap-3">
+        <Button variant="secondary" onClick={() => reset('no-helper')}>
+          {t.resetNoHelper}
+        </Button>
+        <p className="-mt-1 text-center text-sm text-white/50">{t.resetNoHelperHint}</p>
+        <Button variant="secondary" onClick={() => reset('with-helper')}>
+          {t.resetWithHelper}
+        </Button>
+        <p className="-mt-1 text-center text-sm text-white/50">{t.resetWithHelperHint}</p>
+      </div>
+      {message && (
+        <p role="status" className="mt-4 text-center font-semibold text-bright-green">
+          {message}
+        </p>
+      )}
     </Shell>
   )
 }

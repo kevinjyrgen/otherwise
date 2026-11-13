@@ -11,6 +11,8 @@ export default {
   fee: 'Fee',
   total: (owner) => `Total from ${owner}'s account`,
   mockRate: 'Demo rate',
+  balance: (owner, amount) => `${owner} has ${amount}. You only see this while preparing this transfer.`,
+  tooMuch: (owner) => `This is more than ${owner} has.`,
 
   // Step 2
   recipientTitle: 'Who is it going to?',

@@ -5,6 +5,8 @@ export default {
   todoTitle: 'To prepare',
   todoEmpty: 'Nothing to prepare right now.',
   requested: (owner) => `${owner} asked you to prepare a transfer`,
+  requestedAmount: (owner, amount) => `${owner} wants to send ${amount} and asked for your help`,
+  notHelping: 'You are not helping anyone right now.',
   start: 'Start',
   resume: 'Continue',
   otherTitle: 'Prepared by you',

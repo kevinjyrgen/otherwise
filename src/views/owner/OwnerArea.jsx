@@ -4,12 +4,15 @@ import { PLACEHOLDER_SECTIONS } from '../../components/menuSections.js'
 import { useLive } from '../../live.js'
 import Home from '../Home.jsx'
 import NotInPrototype from '../NotInPrototype.jsx'
+import OwnerAddHelper from './OwnerAddHelper.jsx'
 import OwnerConfirm from './OwnerConfirm.jsx'
 import OwnerDecline from './OwnerDecline.jsx'
+import OwnerHelper from './OwnerHelper.jsx'
 import OwnerHome from './OwnerHome.jsx'
 import OwnerRequest from './OwnerRequest.jsx'
 import OwnerResult from './OwnerResult.jsx'
 import OwnerReview from './OwnerReview.jsx'
+import OwnerSend from './OwnerSend.jsx'
 
 /** Picks the screen for one transfer from its status. */
 function OwnerTransfer() {
@@ -33,6 +36,9 @@ export default function OwnerArea() {
           <Route key={section} path={section} element={<NotInPrototype section={section} />} />
         ))}
         <Route path="request" element={<OwnerRequest />} />
+        <Route path="send" element={<OwnerSend />} />
+        <Route path="helper" element={<OwnerHelper />} />
+        <Route path="helper/add" element={<OwnerAddHelper />} />
         <Route path="transfers/:id" element={<OwnerTransfer />} />
         <Route path="transfers/:id/confirm" element={<OwnerConfirm />} />
         <Route path="transfers/:id/decline" element={<OwnerDecline />} />

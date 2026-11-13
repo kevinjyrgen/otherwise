@@ -14,6 +14,7 @@ const ITEMS = [
   { key: 'recipients', path: '/recipients', icon: 'M16 20v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1M9.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M21 20v-1a4 4 0 0 0-3-3.9M15.5 4.2a3.5 3.5 0 0 1 0 6.6' },
   { key: 'payments', path: '/payments', icon: 'M7 4v16M7 4L3.5 7.5M7 4l3.5 3.5M17 20V4M17 20l-3.5-3.5M17 20l3.5-3.5' },
   { key: 'guided', path: '/guided', icon: 'M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z' },
+  { key: 'helper', path: '/helper', ownerOnly: true, icon: 'M15 20v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M8.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7M19 8v6M22 11h-6' },
   { key: 'account', path: '/account', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M4 20a8 8 0 0 1 16 0' },
 ]
 
@@ -22,7 +23,9 @@ function activeKey(role, pathname) {
   const rest = pathname.slice(`/${role}`.length).replace(/\/$/, '')
   if (rest === '') return 'home'
   const section = rest.split('/')[1]
-  return PLACEHOLDER_SECTIONS.includes(section) ? section : 'guided'
+  if (PLACEHOLDER_SECTIONS.includes(section) || section === 'helper') return section
+  // "Send money" starts from Home; everything else is the guided flow.
+  return section === 'send' ? 'home' : 'guided'
 }
 
 function Icon({ path }) {
@@ -43,6 +46,7 @@ export default function Menu() {
   const { pathname } = useLocation()
   const active = activeKey(role, pathname)
   const unread = notifications.filter((n) => !n.read).length
+  const items = ITEMS.filter((item) => !item.ownerOnly || role === 'owner')
   const countBadge = unread > 0 && (
     <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-bright-green px-1 text-xs font-bold text-forest-green">
       {unread}
@@ -60,7 +64,7 @@ export default function Menu() {
           <Wordmark />
         </Link>
         <ul className="mt-8 flex flex-col gap-1">
-          {ITEMS.map((item) => (
+          {items.map((item) => (
             <li key={item.key}>
               <Link
                 to={`/${role}${item.path}`}
@@ -89,7 +93,7 @@ export default function Menu() {
         className="fixed inset-x-0 bottom-0 z-10 border-t border-white/10 bg-ink/95 pb-[env(safe-area-inset-bottom)] backdrop-blur sm:hidden"
       >
         <ul className="mx-auto flex max-w-[430px]">
-          {ITEMS.map((item) => (
+          {items.map((item) => (
             <li key={item.key} className="min-w-0 flex-1">
               <Link
                 to={`/${role}${item.path}`}

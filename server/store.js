@@ -29,15 +29,20 @@ export function save() {
 
 /** Loads the state from disk, or seeds it on first run. */
 export function load() {
-  if (existsSync(DB_FILE)) {
-    replace(JSON.parse(readFileSync(DB_FILE, 'utf8')))
+  const data = existsSync(DB_FILE) ? JSON.parse(readFileSync(DB_FILE, 'utf8')) : null
+  // A file from before helper links existed cannot be used: start fresh.
+  if (data?.links) {
+    replace(data)
   } else {
     reset()
   }
 }
 
-/** Throws everything away and goes back to the seed data. */
-export function reset() {
-  replace(seedData())
+/**
+ * Throws everything away and goes back to the seed data.
+ * @param {{withHelper?: boolean}} [options] see seedData()
+ */
+export function reset(options) {
+  replace(seedData(options))
   save()
 }

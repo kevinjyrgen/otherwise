@@ -3,8 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useLive } from '../live.js'
 import t, { notificationText } from './notifications.strings.js'
 
-/** Where a notification leads: the transfer it is about. */
-const linkFor = (role, notification) => `/${role}/transfers/${notification.transferId}`
+/**
+ * Where a notification leads: the transfer it is about, or, for news about
+ * the helper link, the owner's Helper page / the helper's home (invitations).
+ */
+function linkFor(role, notification) {
+  if (notification.transferId) return `/${role}/transfers/${notification.transferId}`
+  return role === 'owner' ? '/owner/helper' : '/helper'
+}
 
 /**
  * Banner that drops in when a notification arrives. Tapping it opens the

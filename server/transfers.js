@@ -4,27 +4,32 @@
  *
  * REQUESTED → DRAFT → PENDING_APPROVAL → APPROVED → SENT
  * plus DECLINED, CANCELLED, FAILED.
+ *
+ * Two kinds of transfer live here:
+ * - guided: the owner's helper prepares it, the owner confirms it;
+ * - direct: the owner sends it on her own (`direct: true`, no helper). The
+ *   helper never sees these.
  */
 import { randomUUID } from 'node:crypto'
+import { RuleError } from './errors.js'
 import { emitTo } from './events.js'
+import { activeLink, isActiveHelper, needsHelp } from './links.js'
+import { pushNotification } from './notify.js'
 import { PaymentError } from './payments/errors.js'
 import { CURRENCIES, getQuote, sendTransfer } from './payments/index.js'
 import { round2, SOURCE_CURRENCY } from './payments/rates.mock.js'
 import { STATUS } from './seed.js'
 import { db, save } from './store.js'
 
+export { RuleError }
+
 const MAX_AMOUNT = 1_000_000
 const MAX_DESCRIPTION = 120
 const MAX_NOTE = 140
 const MAX_NAME = 70
 
-/** A broken rule: carries the HTTP status and a message in plain words. */
-export class RuleError extends Error {
-  constructor(status, message) {
-    super(message)
-    this.status = status
-  }
-}
+/** Statuses in which the transfer is still the helper's to fill in. */
+const UNSUBMITTED = [STATUS.REQUESTED, STATUS.DRAFT]
 
 /** Reasons the owner can pick when she declines. The client turns them into words. */
 export const DECLINE_REASONS = ['NOT_RECOGNISED', 'WRONG_DETAILS', 'CHANGED_MIND']
@@ -45,7 +50,10 @@ function isValidIban(iban) {
   return BigInt(digits) % 97n === 1n
 }
 
-/** Finds a transfer that belongs to this user. Anything else looks like "not found". */
+/**
+ * Finds a transfer that belongs to this user. Anything else looks like "not
+ * found". Direct transfers have no helper, so a helper can never reach them.
+ */
 function mine(user, id) {
   const transfer = db.transfers.find((t) => t.id === id)
   const key = user.role === 'owner' ? 'ownerId' : 'helperId'
@@ -63,38 +71,45 @@ function requireNotSending(transfer) {
   if (inFlight.has(transfer.id)) throw new RuleError(409, 'This transfer is being sent right now.')
 }
 
+/** Preparing is only allowed while the helper's link to the owner is ACTIVE. */
+function requireActiveHelper(transfer) {
+  if (!isActiveHelper(transfer.ownerId, transfer.helperId)) {
+    throw new RuleError(403, `You are not ${db.users[transfer.ownerId].name}'s helper.`)
+  }
+}
+
 /** Moves the transfer to a status, saves, and tells both people's windows to refresh. */
 function setStatus(transfer, status) {
   transfer.status = status
   transfer.updatedAt = new Date().toISOString()
   save()
   emitTo(transfer.ownerId, 'changed')
-  emitTo(transfer.helperId, 'changed')
+  if (transfer.helperId) emitTo(transfer.helperId, 'changed')
 }
 
-/** Stores a notification for one user and pushes it to their windows. */
+/** Notifies one user about a transfer, with only what that user may see of it. */
 function notify(userId, kind, transfer) {
   const view = viewFor(db.users[userId], transfer)
-  const notification = {
-    id: randomUUID(),
+  pushNotification(
     userId,
-    transferId: transfer.id,
     kind,
-    read: false,
-    createdAt: new Date().toISOString(),
-    // Snapshot of what this user is allowed to see, for the notification text.
-    data: {
+    {
       ownerName: view.ownerName,
       helperName: view.helperName,
       note: view.note,
+      requestedAmount: view.requestedAmount,
       description: view.description,
       recipientName: view.recipient?.name,
       reason: view.reason,
     },
-  }
-  db.notifications.push(notification)
-  save()
-  emitTo(userId, 'notification', notification)
+    transfer.id,
+  )
+}
+
+/** Tells the owner, and the helper if there is one. */
+function notifyBoth(kind, transfer) {
+  notify(transfer.ownerId, kind, transfer)
+  if (transfer.helperId) notify(transfer.helperId, kind, transfer)
 }
 
 /** Copies a fresh quote (rate, fee, totals, arrival) onto the transfer. */
@@ -110,6 +125,26 @@ async function applyQuote(transfer) {
   })
 }
 
+/** Validates an amount of money. */
+function readAmount(value) {
+  const amount = round2(Number(value))
+  if (!(amount > 0) || amount > MAX_AMOUNT) {
+    throw new RuleError(400, 'Enter an amount between 0.01 and 1,000,000.')
+  }
+  return amount
+}
+
+/** Validates who gets the money. */
+function readRecipient(recipient) {
+  const name = String(recipient.name ?? '').trim()
+  const iban = normalizeIban(recipient.iban)
+  const email = String(recipient.email ?? '').trim()
+  if (!name || name.length > MAX_NAME) throw new RuleError(400, "Enter the recipient's full name.")
+  if (!isValidIban(iban)) throw new RuleError(400, 'This IBAN does not look right. Check it for typos.')
+  if (email && !/^\S+@\S+\.\S+$/.test(email)) throw new RuleError(400, 'This email does not look right.')
+  return { name, iban, email }
+}
+
 /**
  * Validates the fields the helper sent. Only fields that are present are
  * checked, so a draft can be saved step by step.
@@ -118,11 +153,7 @@ function readDraftFields(body) {
   const fields = {}
 
   if (body.sourceAmount !== undefined && body.sourceAmount !== null && body.sourceAmount !== '') {
-    const amount = round2(Number(body.sourceAmount))
-    if (!(amount > 0) || amount > MAX_AMOUNT) {
-      throw new RuleError(400, 'Enter an amount between 0.01 and 1,000,000.')
-    }
-    fields.sourceAmount = amount
+    fields.sourceAmount = readAmount(body.sourceAmount)
   }
 
   if (body.targetCurrency !== undefined) {
@@ -132,15 +163,7 @@ function readDraftFields(body) {
     fields.targetCurrency = body.targetCurrency
   }
 
-  if (body.recipient) {
-    const name = String(body.recipient.name ?? '').trim()
-    const iban = normalizeIban(body.recipient.iban)
-    const email = String(body.recipient.email ?? '').trim()
-    if (!name || name.length > MAX_NAME) throw new RuleError(400, "Enter the recipient's full name.")
-    if (!isValidIban(iban)) throw new RuleError(400, 'This IBAN does not look right. Check it for typos.')
-    if (email && !/^\S+@\S+\.\S+$/.test(email)) throw new RuleError(400, 'This email does not look right.')
-    fields.recipient = { name, iban, email }
-  }
+  if (body.recipient) fields.recipient = readRecipient(body.recipient)
 
   if (body.description !== undefined) {
     const description = String(body.description).trim()
@@ -153,26 +176,58 @@ function readDraftFields(body) {
   return fields
 }
 
+/** A new, empty transfer for this owner. */
+function blankTransfer(owner, extra) {
+  const now = new Date().toISOString()
+  return {
+    id: randomUUID(),
+    status: STATUS.REQUESTED,
+    ownerId: owner.id,
+    helperId: null,
+    direct: false,
+    note: '',
+    requestedAmount: null,
+    description: '',
+    recipient: { name: '', iban: '', email: '' },
+    sourceAmount: null,
+    sourceCurrency: SOURCE_CURRENCY,
+    targetCurrency: SOURCE_CURRENCY,
+    targetAmount: null,
+    rate: null,
+    fee: null,
+    total: null,
+    arrivalDays: null,
+    quoteIsMock: null,
+    reason: null,
+    paymentId: null,
+    createdAt: now,
+    updatedAt: now,
+    ...extra,
+  }
+}
+
 // ------------------------------------------------------------------ views
 
 /**
  * What one user may see of a transfer.
  * - The owner does not see a half-filled draft, only that it is being prepared.
- * - The helper never learns anything about the owner's balance, so a failure
+ * - The helper learns nothing about the owner's balance from a failure: one
  *   caused by it is shown to her as a generic NOT_SENT.
  */
 export function viewFor(user, transfer) {
   const base = {
     id: transfer.id,
     status: transfer.status,
+    direct: transfer.direct,
     note: transfer.note,
+    requestedAmount: transfer.requestedAmount,
     ownerName: db.users[transfer.ownerId].name,
-    helperName: db.users[transfer.helperId].name,
+    helperName: transfer.helperId ? db.users[transfer.helperId].name : null,
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
   }
   const isOwner = user.role === 'owner'
-  if (isOwner && [STATUS.REQUESTED, STATUS.DRAFT].includes(transfer.status)) return base
+  if (isOwner && UNSUBMITTED.includes(transfer.status)) return base
 
   return {
     ...base,
@@ -191,7 +246,10 @@ export function viewFor(user, transfer) {
   }
 }
 
-/** All transfers of this user, newest first. */
+/**
+ * All transfers of this user, newest first. For a helper that means the ones
+ * she prepared: the owner's direct transfers are never in her list.
+ */
 export function listFor(user) {
   const key = user.role === 'owner' ? 'ownerId' : 'helperId'
   return db.transfers
@@ -207,35 +265,57 @@ export function getFor(user, id) {
 
 // ---------------------------------------------------------- owner actions
 
-/** Step 1: the owner asks her helper to prepare a transfer. */
-export function createRequest(owner, note) {
-  const now = new Date().toISOString()
-  const transfer = {
-    id: randomUUID(),
-    status: STATUS.REQUESTED,
-    ownerId: owner.id,
-    helperId: owner.helperId,
+/**
+ * Step 1: the owner asks her helper to prepare a transfer. Needs an ACTIVE
+ * helper; an invited or declined one does not count.
+ * @param {object} owner
+ * @param {string} [note] optional line for the helper
+ * @param {number|null} [requestedAmount] set when the request came from "Send money"
+ */
+export function createRequest(owner, note, requestedAmount = null) {
+  const link = activeLink(owner.id)
+  if (!link) throw new RuleError(409, 'You do not have a helper yet. Add a helper first.')
+
+  const transfer = blankTransfer(owner, {
+    helperId: link.helperId,
     note: String(note ?? '').trim().slice(0, MAX_NOTE),
-    description: '',
-    recipient: { name: '', iban: '', email: '' },
-    sourceAmount: null,
-    sourceCurrency: SOURCE_CURRENCY,
-    targetCurrency: SOURCE_CURRENCY,
-    targetAmount: null,
-    rate: null,
-    fee: null,
-    total: null,
-    arrivalDays: null,
-    quoteIsMock: null,
-    reason: null,
-    paymentId: null,
-    createdAt: now,
-    updatedAt: now,
-  }
+    requestedAmount,
+  })
   db.transfers.push(transfer)
   setStatus(transfer, STATUS.REQUESTED)
   notify(transfer.helperId, 'TRANSFER_REQUESTED', transfer)
   return transfer
+}
+
+/**
+ * "Send money": the owner sends on her own, unless her help setting says this
+ * amount should go to her helper. Then nothing is sent and it becomes a help
+ * request instead.
+ *
+ * Works in two calls so she is not asked for details she will not need:
+ * 1. amount only → HELP_REQUESTED (request created) or NEEDS_DETAILS;
+ * 2. amount + recipient → the direct transfer is sent (SENT or FAILED).
+ * The help rule is checked on every call, so it cannot be skipped.
+ * @returns {Promise<{outcome: 'HELP_REQUESTED'|'NEEDS_DETAILS'|'SENT'|'FAILED', transfer?: object}>}
+ */
+export async function sendMoney(owner, body) {
+  const amount = readAmount(body.amount)
+
+  if (needsHelp(owner.id, amount)) {
+    return { outcome: 'HELP_REQUESTED', transfer: createRequest(owner, '', amount) }
+  }
+  if (!body.recipient) return { outcome: 'NEEDS_DETAILS' }
+
+  const transfer = blankTransfer(owner, {
+    direct: true,
+    status: STATUS.APPROVED,
+    sourceAmount: amount,
+    recipient: readRecipient(body.recipient),
+  })
+  await applyQuote(transfer)
+  db.transfers.push(transfer)
+  await pay(transfer)
+  return { outcome: transfer.status, transfer }
 }
 
 /** Step 8: the owner says yes to the details. Nothing is sent yet. */
@@ -260,8 +340,7 @@ export function decline(owner, id, reason) {
   if (!DECLINE_REASONS.includes(reason)) throw new RuleError(400, 'Choose a reason.')
   transfer.reason = reason
   setStatus(transfer, STATUS.DECLINED)
-  notify(transfer.ownerId, 'DECLINED', transfer)
-  notify(transfer.helperId, 'DECLINED', transfer)
+  notifyBoth('DECLINED', transfer)
   return transfer
 }
 
@@ -298,14 +377,12 @@ async function pay(transfer) {
     owner.balance = round2(owner.balance - transfer.total)
     transfer.paymentId = result.id
     setStatus(transfer, STATUS.SENT)
-    notify(transfer.ownerId, 'SENT', transfer)
-    notify(transfer.helperId, 'SENT', transfer)
+    notifyBoth('SENT', transfer)
   } catch (error) {
     if (!(error instanceof PaymentError)) console.error('[payment] unexpected error', error)
     transfer.reason = error instanceof PaymentError ? error.code : 'PAYMENT_REJECTED'
     setStatus(transfer, STATUS.FAILED)
-    notify(transfer.ownerId, 'FAILED', transfer)
-    notify(transfer.helperId, 'FAILED', transfer)
+    notifyBoth('FAILED', transfer)
   }
   return transfer
 }
@@ -315,9 +392,10 @@ async function pay(transfer) {
 /** Steps 3–4: the helper fills in or changes the transfer. Only before submitting. */
 export async function saveDraft(helper, id, body) {
   const transfer = mine(helper, id)
+  requireActiveHelper(transfer)
   requireStatus(
     transfer,
-    [STATUS.REQUESTED, STATUS.DRAFT],
+    UNSUBMITTED,
     'This transfer was already sent for approval and can no longer be changed.',
   )
   Object.assign(transfer, readDraftFields(body))
@@ -329,6 +407,7 @@ export async function saveDraft(helper, id, body) {
 /** Step 5: the helper hands the finished transfer to the owner. */
 export async function submit(helper, id) {
   const transfer = mine(helper, id)
+  requireActiveHelper(transfer)
   requireStatus(transfer, [STATUS.DRAFT], 'This transfer cannot be sent for approval.')
   if (!transfer.sourceAmount) throw new RuleError(400, 'Enter an amount first.')
   if (!transfer.recipient.iban) throw new RuleError(400, "Enter the recipient's details first.")
@@ -347,11 +426,47 @@ export function cancel(helper, id) {
   const transfer = mine(helper, id)
   requireStatus(
     transfer,
-    [STATUS.REQUESTED, STATUS.DRAFT, STATUS.PENDING_APPROVAL, STATUS.APPROVED],
+    [...UNSUBMITTED, STATUS.PENDING_APPROVAL, STATUS.APPROVED],
     'This transfer can no longer be cancelled.',
   )
   requireNotSending(transfer)
+  transfer.reason = 'HELPER_CANCELLED'
   setStatus(transfer, STATUS.CANCELLED)
   notify(transfer.ownerId, 'CANCELLED', transfer)
   return transfer
+}
+
+/**
+ * The owner's balance, for the helper. Allowed only while she is the active
+ * helper AND is preparing this transfer the owner asked for (not yet
+ * submitted). In every other moment the answer is 403.
+ */
+export function balanceFor(helper, id) {
+  const transfer = mine(helper, id)
+  if (!UNSUBMITTED.includes(transfer.status) || !isActiveHelper(transfer.ownerId, helper.id)) {
+    throw new RuleError(403, 'You can only see the balance while preparing a transfer.')
+  }
+  const owner = db.users[transfer.ownerId]
+  return { balance: owner.balance, currency: owner.currency }
+}
+
+// ------------------------------------------------------- link bookkeeping
+
+/**
+ * Called when the owner removes her helper: every transfer that helper had
+ * not submitted yet is cancelled. Submitted ones stay with the owner to decide.
+ * @param {{ownerId: string, helperId: string}} link the removed link
+ */
+export function cancelUnsubmitted(link) {
+  db.transfers
+    .filter(
+      (t) =>
+        t.ownerId === link.ownerId &&
+        t.helperId === link.helperId &&
+        UNSUBMITTED.includes(t.status),
+    )
+    .forEach((transfer) => {
+      transfer.reason = 'HELPER_REMOVED'
+      setStatus(transfer, STATUS.CANCELLED)
+    })
 }

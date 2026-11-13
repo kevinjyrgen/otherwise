@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import Shell from '../../components/Shell.jsx'
 import { useLive } from '../../live.js'
@@ -12,6 +12,8 @@ export default function OwnerRequest() {
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  // No active helper (e.g. she was just removed): nothing to ask.
+  if (!me.helperName) return <Navigate to="/owner/helper" replace />
   // Mari Tamm → Mari: first names read friendlier on the owner's screens.
   const helper = me.helperName.split(' ')[0]
 

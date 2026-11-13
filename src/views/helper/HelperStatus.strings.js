@@ -5,7 +5,7 @@ export default {
     APPROVED: (owner) => `Waiting for ${owner} to confirm`,
     SENT: () => 'Transfer sent',
     DECLINED: (owner) => `${owner} declined`,
-    CANCELLED: () => 'You cancelled this transfer',
+    CANCELLED: () => 'Transfer cancelled',
     FAILED: () => 'Transfer not sent',
   },
   text: {

@@ -12,7 +12,8 @@ import t from './OwnerResult.strings.js'
  */
 export default function OwnerResult({ transfer }) {
   const { status } = transfer
-  const helper = transfer.helperName.split(' ')[0]
+  // Direct transfers (sent on her own) have no helper.
+  const helper = transfer.helperName?.split(' ')[0]
   const facts = {
     helper,
     recipient: transfer.recipient?.name,
@@ -28,7 +29,9 @@ export default function OwnerResult({ transfer }) {
       {reasonText.owner[transfer.reason] && (
         <p className="mt-4 text-2xl">{reasonText.owner[transfer.reason]}</p>
       )}
-      <p className="mt-4 text-xl text-white/70">{t.text[status](facts)}</p>
+      <p className="mt-4 text-xl text-white/70">
+        {transfer.direct && t.textDirect[status] ? t.textDirect[status](facts) : t.text[status](facts)}
+      </p>
       {status === 'SENT' && (
         <p className="mt-2 text-xl text-white/70">{t.arrives(transfer.arrivalDays)}</p>
       )}
