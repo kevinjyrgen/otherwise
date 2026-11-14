@@ -22,15 +22,15 @@ export default function OwnerHome() {
     <Shell>
       <h1 className="mt-4 text-4xl font-extrabold tracking-tight">{t.greeting(me.name)}</h1>
 
-      <section className="mt-6 rounded-3xl bg-forest-green p-6">
-        <p className="text-xl text-bright-green">{t.balanceLabel}</p>
+      <section className="mt-6 rounded-3xl bg-rich-green p-6">
+        <p className="text-xl text-brand-pink">{t.balanceLabel}</p>
         <p className="mt-1 text-[40px] leading-tight font-extrabold tracking-tight">
           {formatMoney(me.balance, me.currency)}
         </p>
       </section>
 
       {waiting.map((transfer) => (
-        <section key={transfer.id} className="mt-6 rounded-3xl bg-card p-6 ring-2 ring-bright-green">
+        <section key={transfer.id} className="mt-6 rounded-3xl bg-card p-6 ring-2 ring-brand-pink">
           <h2 className="text-2xl font-bold">{t.waitingTitle(transfer.helperName)}</h2>
           <p className="mt-2 text-xl text-white/80">“{transfer.description}”</p>
           <Button size="lg" className="mt-5" to={`/owner/transfers/${transfer.id}`}>

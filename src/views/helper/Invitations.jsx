@@ -33,13 +33,13 @@ export default function Invitations() {
     <section className="mt-6">
       <h2 className="font-bold text-white/60">{t.title}</h2>
       {me.invitations.map((invitation) => (
-        <div key={invitation.id} className="mt-3 rounded-3xl bg-card p-5 ring-2 ring-bright-green">
+        <div key={invitation.id} className="mt-3 rounded-3xl bg-card p-5 ring-2 ring-brand-pink">
           <div className="flex items-center gap-3">
             <Avatar name={invitation.ownerName} />
             <p className="text-xl font-bold">{t.asking(invitation.ownerName)}</p>
           </div>
           <p className="mt-4 text-sm text-white/60">{t.rightsIntro(invitation.ownerName)}</p>
-          <blockquote className="mt-2 border-l-2 border-bright-green pl-4 text-lg leading-relaxed">
+          <blockquote className="mt-2 border-l-2 border-brand-pink pl-4 text-lg leading-relaxed">
             {rightsText}
           </blockquote>
           <p className="mt-4 font-semibold">

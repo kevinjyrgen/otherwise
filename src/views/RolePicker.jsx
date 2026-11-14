@@ -82,8 +82,8 @@ export default function RolePicker() {
   }
 
   return (
-    <Shell>
-      <h1 className="mt-10 text-4xl font-extrabold tracking-tight">{t.title}</h1>
+    <Shell hero>
+      <h1 className="mt-8 text-4xl font-extrabold tracking-tight">{t.title}</h1>
       <p className="mt-3 text-lg text-white/60">{t.subtitle}</p>
       <div className="mt-8 flex flex-col gap-4">
         <RoleCard to="/owner" name={t.ownerName} role={t.ownerRole} />
@@ -102,7 +102,7 @@ export default function RolePicker() {
         <p className="-mt-1 text-center text-sm text-white/50">{t.resetWithHelperHint}</p>
       </div>
       {message && (
-        <p role="status" className="mt-4 text-center font-semibold text-bright-green">
+        <p role="status" className="mt-4 text-center font-semibold text-brand-pink">
           {message}
         </p>
       )}

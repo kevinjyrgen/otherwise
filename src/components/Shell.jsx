@@ -10,9 +10,10 @@ import Wordmark from './Wordmark.jsx'
  * footer. Inside a role area it adds the main menu (sidebar on desktop, bottom
  * bar on a phone), the live dot, the bell and toasts, so notifications work
  * on every page.
- * @param {{children: React.ReactNode}} props
+ * @param {{children: React.ReactNode, hero?: boolean}} props `hero` shows the
+ *   logo large on top instead of small in the header (the landing page)
  */
-export default function Shell({ children }) {
+export default function Shell({ children, hero = false }) {
   const live = useLive()
   return (
     <div className="min-h-svh bg-ink text-white sm:flex sm:justify-center">
@@ -20,16 +21,23 @@ export default function Shell({ children }) {
       {live && <Menu />}
       {/* Extra bottom padding on a phone keeps content clear of the bottom bar. */}
       <div className={`mx-auto flex min-h-svh w-full max-w-[430px] flex-col px-5 sm:mx-0 sm:pb-6 ${live ? 'pb-24' : 'pb-6'}`}>
-        <header className="flex min-h-20 items-center justify-between py-4">
+        {hero && (
+          <div className="pt-6">
+            <Wordmark big />
+          </div>
+        )}
+        <header className={`flex items-center justify-between ${hero ? '' : 'min-h-20 py-4'}`}>
           {/* On desktop the wordmark lives in the sidebar. */}
-          <Link to={live ? `/${live.role}` : '/'} className={live ? 'sm:invisible' : ''}>
-            <Wordmark />
-          </Link>
+          {!hero && (
+            <Link to={live ? `/${live.role}` : '/'} className={live ? 'sm:invisible' : ''}>
+              <Wordmark />
+            </Link>
+          )}
           {live && (
             <div className="flex items-center gap-3">
               <span
                 title={live.connected ? 'Live' : 'Offline'}
-                className={`h-2.5 w-2.5 rounded-full ${live.connected ? 'bg-bright-green' : 'bg-red-400'}`}
+                className={`h-2.5 w-2.5 rounded-full ${live.connected ? 'bg-brand-pink' : 'bg-red-400'}`}
               />
               <Bell />
             </div>

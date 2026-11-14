@@ -14,12 +14,12 @@ export default function Stepper({ steps, current }) {
             {/* Line to the previous step. */}
             {index > 0 && (
               <span
-                className={`absolute top-4 right-1/2 h-0.5 w-full -translate-y-1/2 ${index <= current ? 'bg-bright-green' : 'bg-white/15'}`}
+                className={`absolute top-4 right-1/2 h-0.5 w-full -translate-y-1/2 ${index <= current ? 'bg-brand-pink' : 'bg-white/15'}`}
               />
             )}
             <span
               className={`relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
-                done || active ? 'bg-bright-green text-forest-green' : 'bg-card-hover text-white/50'
+                done || active ? 'bg-brand-pink text-brand-green' : 'bg-card-hover text-white/50'
               }`}
             >
               {done ? '✓' : index + 1}

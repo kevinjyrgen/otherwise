@@ -8,7 +8,7 @@ import t, { THRESHOLDS } from './helpSetting.strings.js'
  *   current?: {helpMode: string, threshold: number|null},
  *   onChoose: (setting: {helpMode: 'EVERY'|'OVER', threshold: number|null}) => void,
  *   disabled?: boolean,
- * }} props `current` is highlighted in green
+ * }} props `current` is highlighted in the brand pink
  */
 export default function HelpSettingChooser({ current, onChoose, disabled }) {
   const isEvery = current?.helpMode === 'EVERY'

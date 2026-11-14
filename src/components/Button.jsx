@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 
 const variants = {
-  primary: 'bg-bright-green text-forest-green hover:brightness-105',
+  primary: 'bg-brand-pink text-brand-green hover:brightness-105',
   secondary: 'bg-card-hover text-white hover:brightness-125',
 }
 

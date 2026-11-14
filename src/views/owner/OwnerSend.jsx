@@ -103,7 +103,7 @@ export default function OwnerSend() {
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight">
             {preset ? t.amountTitleTo(preset.name) : t.amountTitle}
           </h1>
-          <div className="mt-8 flex items-center rounded-2xl border border-white/10 bg-card pr-5 focus-within:border-bright-green">
+          <div className="mt-8 flex items-center rounded-2xl border border-white/10 bg-card pr-5 focus-within:border-brand-pink">
             <input
               inputMode="decimal"
               value={amountText}

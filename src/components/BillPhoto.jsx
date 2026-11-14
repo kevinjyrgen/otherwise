@@ -63,7 +63,7 @@ export default function BillPhoto({ transferId, src, big = false }) {
             type="button"
             autoFocus
             onClick={() => setOpen(false)}
-            className={`mx-auto mt-4 min-h-14 w-full max-w-[430px] shrink-0 rounded-full bg-bright-green font-bold text-forest-green ${big ? 'text-xl' : 'text-base'}`}
+            className={`mx-auto mt-4 min-h-14 w-full max-w-[430px] shrink-0 rounded-full bg-brand-pink font-bold text-brand-green ${big ? 'text-xl' : 'text-base'}`}
           >
             {t.close}
           </button>

@@ -1,8 +1,8 @@
 const looks = {
-  success: { circle: 'bg-bright-green text-forest-green', path: 'M5 12.5l4.5 4.5L19 7.5' },
+  success: { circle: 'bg-brand-pink text-brand-green', path: 'M5 12.5l4.5 4.5L19 7.5' },
   problem: { circle: 'bg-red-400/20 text-red-300', path: 'M6 6l12 12M18 6L6 18' },
   neutral: { circle: 'bg-white/10 text-white', path: 'M5 12h14' },
-  waiting: { circle: 'bg-bright-green/15 text-bright-green', path: 'M12 6.5V12l3.5 2.5' },
+  waiting: { circle: 'bg-brand-pink/15 text-brand-pink', path: 'M12 6.5V12l3.5 2.5' },
 }
 
 /** Which look fits each transfer status. */

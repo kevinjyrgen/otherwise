@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Our own mark: lime tile with a dark-green "sent" arrow. -->
-  <rect width="64" height="64" rx="16" fill="#9fe870"/>
-  <path d="M18 33h26M33 21l12 12-12 12" fill="none" stroke="#163300" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Our own mark in the logo's colours: pink tile with a dark-green "sent" arrow. -->
+  <rect width="64" height="64" rx="16" fill="#fdcee0"/>
+  <path d="M18 33h26M33 21l12 12-12 12" fill="none" stroke="#153203" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

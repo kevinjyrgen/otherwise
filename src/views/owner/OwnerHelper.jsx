@@ -10,7 +10,7 @@ import t from './OwnerHelper.strings.js'
 
 const pill = {
   INVITED: 'bg-white/10 text-white',
-  ACTIVE: 'bg-bright-green text-forest-green',
+  ACTIVE: 'bg-brand-pink text-brand-green',
   DECLINED: 'bg-red-400/20 text-red-300',
 }
 

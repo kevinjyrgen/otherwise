@@ -10,7 +10,7 @@ import t from './Home.strings.js'
 function BalanceCard({ currency, amount, main }) {
   return (
     <li
-      className={`flex min-h-36 w-44 shrink-0 snap-start flex-col justify-between rounded-3xl p-5 ${main ? 'bg-forest-green' : 'bg-card'}`}
+      className={`flex min-h-36 w-44 shrink-0 snap-start flex-col justify-between rounded-3xl p-5 ${main ? 'bg-rich-green' : 'bg-card'}`}
     >
       <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-xs font-bold">
         {currency}
@@ -25,7 +25,7 @@ function BalanceCard({ currency, amount, main }) {
   )
 }
 
-/** One row of the activity list. Money coming in is shown in green with a plus. */
+/** One row of the activity list. Money coming in is shown in the brand pink with a plus. */
 function ActivityRow({ title, detail, amount, currency }) {
   const incoming = amount > 0
   return (
@@ -40,7 +40,7 @@ function ActivityRow({ title, detail, amount, currency }) {
         <span className="block truncate font-semibold">{title}</span>
         <span className="block truncate text-sm text-white/60">{detail}</span>
       </span>
-      <span className={`shrink-0 font-semibold ${incoming ? 'text-bright-green' : ''}`}>
+      <span className={`shrink-0 font-semibold ${incoming ? 'text-brand-pink' : ''}`}>
         {incoming ? '+' : '−'}
         {formatMoney(Math.abs(amount), currency)}
       </span>
@@ -117,7 +117,7 @@ export default function Home() {
       {/* Invites arrive live and must be visible on the home page. */}
       {!isOwner && <Invitations />}
 
-      <section className="mt-6 rounded-3xl bg-card p-5 ring-1 ring-bright-green/40">
+      <section className="mt-6 rounded-3xl bg-card p-5 ring-1 ring-brand-pink/40">
         <h2 className="text-xl font-bold">{promo.title}</h2>
         <p className="mt-1 text-white/70">{promo.text}</p>
         {promo.button && (

@@ -56,7 +56,7 @@ export default function OwnerReview({ transfer }) {
       )}
 
       {transfer.repeat && (
-        <section className="mt-4 rounded-3xl bg-card p-6 ring-2 ring-bright-green">
+        <section className="mt-4 rounded-3xl bg-card p-6 ring-2 ring-brand-pink">
           <h2 className="text-2xl font-bold">{t.repeatTitle}</h2>
           <p className="mt-2 text-xl">{t.repeatText(transfer.repeat.dayOfMonth)}</p>
           <p className="mt-2 text-xl text-white/70">{t.repeatControl}</p>

@@ -78,7 +78,7 @@ export default function OwnerPayments() {
           </h2>
           <p className="mt-3 text-xl">{t.when(schedule.dayOfMonth)}</p>
           {schedule.skipNext ? (
-            <p className="mt-1 text-xl font-semibold text-bright-green">{t.skipped(schedule.nextDate)}</p>
+            <p className="mt-1 text-xl font-semibold text-brand-pink">{t.skipped(schedule.nextDate)}</p>
           ) : (
             <p className="mt-1 text-xl text-white/70">{t.next(schedule.nextDate)}</p>
           )}

@@ -10,9 +10,9 @@ const TODO = ['REQUESTED', 'DRAFT']
 
 /** Pill colours per status; anything not listed is neutral grey. */
 const pill = {
-  PENDING_APPROVAL: 'bg-bright-green/15 text-bright-green',
-  APPROVED: 'bg-bright-green/15 text-bright-green',
-  SENT: 'bg-bright-green text-forest-green',
+  PENDING_APPROVAL: 'bg-brand-pink/15 text-brand-pink',
+  APPROVED: 'bg-brand-pink/15 text-brand-pink',
+  SENT: 'bg-brand-pink text-brand-green',
   FAILED: 'bg-red-400/20 text-red-300',
 }
 

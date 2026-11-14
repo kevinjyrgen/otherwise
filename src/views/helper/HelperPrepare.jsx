@@ -154,7 +154,7 @@ export default function HelperPrepare({ transfer }) {
           <h1 className="mt-6 text-2xl font-extrabold tracking-tight">{t.amountTitle}</h1>
           <label className="mt-5 block text-sm text-white/70">
             {t.youSend(owner)}
-            <div className="mt-2 flex items-center rounded-xl border border-white/10 bg-card pr-4 focus-within:border-bright-green">
+            <div className="mt-2 flex items-center rounded-xl border border-white/10 bg-card pr-4 focus-within:border-brand-pink">
               <input
                 inputMode="decimal"
                 value={form.amount}

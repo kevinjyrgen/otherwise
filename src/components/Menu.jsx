@@ -48,7 +48,7 @@ export default function Menu() {
   const unread = notifications.filter((n) => !n.read).length
   const items = ITEMS.filter((item) => !item.ownerOnly || role === 'owner')
   const countBadge = unread > 0 && (
-    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-bright-green px-1 text-xs font-bold text-forest-green">
+    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-pink px-1 text-xs font-bold text-brand-green">
       {unread}
     </span>
   )
@@ -77,7 +77,7 @@ export default function Menu() {
                 <span className="flex-1 text-sm whitespace-nowrap">{t.items[item.key].label}</span>
                 {item.key === 'guided' &&
                   (countBadge || (
-                    <span className="rounded-full bg-bright-green/15 px-2 py-0.5 text-xs font-bold text-bright-green">
+                    <span className="rounded-full bg-brand-pink/15 px-2 py-0.5 text-xs font-bold text-brand-pink">
                       {t.newBadge}
                     </span>
                   ))}
@@ -99,7 +99,7 @@ export default function Menu() {
                 to={`/${role}${item.path}`}
                 aria-current={active === item.key ? 'page' : undefined}
                 className={`relative flex min-h-16 flex-col items-center justify-center gap-1 text-[10px] font-semibold ${
-                  active === item.key ? 'text-bright-green' : 'text-white/60'
+                  active === item.key ? 'text-brand-pink' : 'text-white/60'
                 }`}
               >
                 <Icon path={item.icon} />
@@ -107,7 +107,7 @@ export default function Menu() {
                 {item.key === 'guided' && (
                   <span className="absolute top-1 left-1/2 ml-2">
                     {countBadge || (
-                      <span className="rounded-full bg-bright-green px-1.5 text-[9px] font-bold text-forest-green">
+                      <span className="rounded-full bg-brand-pink px-1.5 text-[9px] font-bold text-brand-green">
                         {t.newBadge}
                       </span>
                     )}

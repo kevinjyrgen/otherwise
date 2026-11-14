@@ -40,7 +40,7 @@ export function Toast() {
           dismissToast()
           navigate(linkFor(role, toast))
         }}
-        className={`w-full rounded-3xl bg-bright-green px-5 py-4 text-left font-semibold text-forest-green shadow-2xl shadow-black/60 ${big ? 'text-xl' : 'text-base'}`}
+        className={`w-full rounded-3xl bg-brand-pink px-5 py-4 text-left font-semibold text-brand-green shadow-2xl shadow-black/60 ${big ? 'text-xl' : 'text-base'}`}
       >
         {notificationText(role, toast)}
       </button>
@@ -77,7 +77,7 @@ export function Bell() {
           <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
         </svg>
         {unread > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-bright-green px-1 text-sm font-bold text-forest-green">
+          <span className="absolute -top-1 -right-1 flex h-6 min-w-6 items-center justify-center rounded-full bg-brand-pink px-1 text-sm font-bold text-brand-green">
             {unread}
           </span>
         )}

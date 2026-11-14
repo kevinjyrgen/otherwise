@@ -1,13 +1,21 @@
 @import "tailwindcss";
 
-/* Brand colors, usable as bg-forest-green, text-bright-green, etc. */
+/*
+ * Brand colors, taken from our logo (public/logo.png): pink on dark green.
+ * Usable as bg-brand-pink, text-brand-green, etc.
+ */
 @theme {
-  --color-forest-green: #163300;
-  --color-bright-green: #9fe870;
-  /* Dark surfaces: page background, cards, card hover. */
-  --color-ink: #121511;
-  --color-card: #1e211c;
-  --color-card-hover: #2a2e27;
+  /* The logo's pink: buttons, highlights, anything that asks for attention. */
+  --color-brand-pink: #fdcee0;
+  /* The logo's green: text and icons on pink. */
+  --color-brand-green: #153203;
+  /* Page background: a darker shade of the logo's green, so cards and pink stand out more. */
+  --color-ink: #071402;
+  /* Surfaces on top of the page. A card is exactly the logo's green; hover is a step lighter. */
+  --color-card: #153203;
+  --color-card-hover: #23480d;
+  /* A fuller green for the one card that should stand out without being pink (the balance). */
+  --color-rich-green: #1f5206;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --animate-toast: toast-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.2);
   --animate-pop: pop-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.3);
@@ -39,9 +47,9 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* One visible focus style everywhere, in the brand lime. */
+  /* One visible focus style everywhere, in the brand pink. */
   :focus-visible {
-    outline: 2px solid var(--color-bright-green);
+    outline: 2px solid var(--color-brand-pink);
     outline-offset: 2px;
   }
 
@@ -54,7 +62,7 @@
   textarea:focus-visible,
   select:focus-visible {
     outline-offset: 0;
-    border-color: var(--color-bright-green);
+    border-color: var(--color-brand-pink);
   }
 
   @media (prefers-reduced-motion: reduce) {
