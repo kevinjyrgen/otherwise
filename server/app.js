@@ -60,8 +60,11 @@ export function createApp() {
 
   app.get('/api/notifications', (req, res) =>
     res.json(
+      // Newest first. Reversed before sorting so two notifications from the
+      // same millisecond still come out latest first (the sort keeps ties in order).
       db.notifications
         .filter((n) => n.userId === req.user.id)
+        .reverse()
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     ),
   )
