@@ -8,13 +8,23 @@
  * Two kinds of transfer live here:
  * - guided: the owner's helper prepares it, the owner confirms it;
  * - direct: the owner sends it on her own (`direct: true`, no helper). The
- *   helper never sees these.
+ *   helper never sees these. The monthly payments of a regular payment are
+ *   direct too: the owner approved them when she confirmed the first one.
+ *
+ * Three things make a transfer easier, all optional:
+ * - `photo`: the owner sent a photo of a bill instead of explaining it;
+ * - `repeat`: the helper marked it "every month", so confirming it also
+ *   starts a regular payment (see schedules.js);
+ * - a saved recipient: the owner picked someone she paid before (recipients.js).
  */
 import { randomUUID } from 'node:crypto'
 import { RuleError } from './errors.js'
 import { emitTo } from './events.js'
 import { activeLink, isActiveHelper, needsHelp } from './links.js'
 import { pushNotification } from './notify.js'
+import { photoPath, savePhoto } from './photos.js'
+import * as recipients from './recipients.js'
+import { createFromTransfer, MAX_DAY_OF_MONTH } from './schedules.js'
 import { PaymentError } from './payments/errors.js'
 import { CURRENCIES, getQuote, sendTransfer } from './payments/index.js'
 import { round2, SOURCE_CURRENCY } from './payments/rates.mock.js'
@@ -27,6 +37,7 @@ const MAX_AMOUNT = 1_000_000
 const MAX_DESCRIPTION = 120
 const MAX_NOTE = 140
 const MAX_NAME = 70
+const MAX_REFERENCE = 35
 
 /** Statuses in which the transfer is still the helper's to fill in. */
 const UNSUBMITTED = [STATUS.REQUESTED, STATUS.DRAFT]
@@ -101,6 +112,8 @@ function notify(userId, kind, transfer) {
       description: view.description,
       recipientName: view.recipient?.name,
       reason: view.reason,
+      hasPhoto: view.hasPhoto,
+      regular: view.regular,
     },
     transfer.id,
   )
@@ -173,6 +186,27 @@ function readDraftFields(body) {
     fields.description = description
   }
 
+  if (body.reference !== undefined) {
+    const reference = String(body.reference ?? '').trim()
+    if (reference.length > MAX_REFERENCE) {
+      throw new RuleError(400, `Keep the reference number under ${MAX_REFERENCE} characters.`)
+    }
+    fields.reference = reference
+  }
+
+  // null = just this once; { dayOfMonth } = and then every month on that day.
+  if (body.repeat !== undefined) {
+    if (body.repeat === null) {
+      fields.repeat = null
+    } else {
+      const dayOfMonth = Number(body.repeat?.dayOfMonth)
+      if (!Number.isInteger(dayOfMonth) || dayOfMonth < 1 || dayOfMonth > MAX_DAY_OF_MONTH) {
+        throw new RuleError(400, `Choose a day of the month between 1 and ${MAX_DAY_OF_MONTH}.`)
+      }
+      fields.repeat = { dayOfMonth }
+    }
+  }
+
   return fields
 }
 
@@ -189,6 +223,10 @@ function blankTransfer(owner, extra) {
     requestedAmount: null,
     description: '',
     recipient: { name: '', iban: '', email: '' },
+    reference: '',
+    photo: null,
+    repeat: null,
+    scheduleId: null,
     sourceAmount: null,
     sourceCurrency: SOURCE_CURRENCY,
     targetCurrency: SOURCE_CURRENCY,
@@ -223,6 +261,10 @@ export function viewFor(user, transfer) {
     requestedAmount: transfer.requestedAmount,
     ownerName: db.users[transfer.ownerId].name,
     helperName: transfer.helperId ? db.users[transfer.helperId].name : null,
+    // The photo itself is fetched separately, see photoFor().
+    hasPhoto: Boolean(transfer.photo),
+    // True for the monthly payments of a regular payment (not for the first one).
+    regular: transfer.direct && Boolean(transfer.scheduleId),
     createdAt: transfer.createdAt,
     updatedAt: transfer.updatedAt,
   }
@@ -233,6 +275,8 @@ export function viewFor(user, transfer) {
     ...base,
     description: transfer.description,
     recipient: transfer.recipient,
+    reference: transfer.reference,
+    repeat: transfer.repeat,
     sourceAmount: transfer.sourceAmount,
     sourceCurrency: transfer.sourceCurrency,
     targetAmount: transfer.targetAmount,
@@ -263,16 +307,30 @@ export function getFor(user, id) {
   return viewFor(user, mine(user, id))
 }
 
+/**
+ * The bill photo of a transfer, as a file path. Only the two people of that
+ * transfer can reach it: the owner who sent it and the helper she asked.
+ */
+export function photoFor(user, id) {
+  const transfer = mine(user, id)
+  if (!transfer.photo) throw new RuleError(404, 'This transfer has no photo.')
+  return photoPath(transfer.photo)
+}
+
 // ---------------------------------------------------------- owner actions
 
 /**
  * Step 1: the owner asks her helper to prepare a transfer. Needs an ACTIVE
  * helper; an invited or declined one does not count.
  * @param {object} owner
- * @param {string} [note] optional line for the helper
- * @param {number|null} [requestedAmount] set when the request came from "Send money"
+ * @param {object} [request]
+ * @param {string} [request.note] optional line for the helper
+ * @param {string} [request.photo] optional photo of a bill, as a data URL
+ * @param {number|null} [request.requestedAmount] set when the request came from "Send money"
+ * @param {{name: string, iban: string, email: string}} [request.recipient] set when she
+ *   picked a saved recipient in "Send money": filled in for the helper to check
  */
-export function createRequest(owner, note, requestedAmount = null) {
+export function createRequest(owner, { note, photo, requestedAmount = null, recipient } = {}) {
   const link = activeLink(owner.id)
   if (!link) throw new RuleError(409, 'You do not have a helper yet. Add a helper first.')
 
@@ -280,6 +338,8 @@ export function createRequest(owner, note, requestedAmount = null) {
     helperId: link.helperId,
     note: String(note ?? '').trim().slice(0, MAX_NOTE),
     requestedAmount,
+    photo: photo ? savePhoto(photo) : null,
+    ...(recipient && { recipient }),
   })
   db.transfers.push(transfer)
   setStatus(transfer, STATUS.REQUESTED)
@@ -296,21 +356,30 @@ export function createRequest(owner, note, requestedAmount = null) {
  * 1. amount only → HELP_REQUESTED (request created) or NEEDS_DETAILS;
  * 2. amount + recipient → the direct transfer is sent (SENT or FAILED).
  * The help rule is checked on every call, so it cannot be skipped.
+ *
+ * The recipient is either typed (`recipient`) or one she saved earlier
+ * (`recipientId`). A saved recipient does not get around the help rule: over
+ * her limit it still goes to her helper, with the recipient already filled in.
+ * With a saved recipient the first call says `checkOnly`, so nothing is sent
+ * before she has seen the check screen.
  * @returns {Promise<{outcome: 'HELP_REQUESTED'|'NEEDS_DETAILS'|'SENT'|'FAILED', transfer?: object}>}
  */
 export async function sendMoney(owner, body) {
   const amount = readAmount(body.amount)
+  const saved = body.recipientId ? recipients.find(owner, body.recipientId) : null
+  const recipient = saved && { name: saved.name, iban: saved.iban, email: saved.email }
 
   if (needsHelp(owner.id, amount)) {
-    return { outcome: 'HELP_REQUESTED', transfer: createRequest(owner, '', amount) }
+    const request = createRequest(owner, { requestedAmount: amount, recipient })
+    return { outcome: 'HELP_REQUESTED', transfer: request }
   }
-  if (!body.recipient) return { outcome: 'NEEDS_DETAILS' }
+  if (body.checkOnly || (!recipient && !body.recipient)) return { outcome: 'NEEDS_DETAILS' }
 
   const transfer = blankTransfer(owner, {
     direct: true,
     status: STATUS.APPROVED,
     sourceAmount: amount,
-    recipient: readRecipient(body.recipient),
+    recipient: recipient ?? readRecipient(body.recipient),
   })
   await applyQuote(transfer)
   db.transfers.push(transfer)
@@ -376,6 +445,8 @@ async function pay(transfer) {
     const result = await sendTransfer(transfer)
     owner.balance = round2(owner.balance - transfer.total)
     transfer.paymentId = result.id
+    // Her confirmation of an "every month" transfer also starts the regular payment.
+    if (transfer.repeat && !transfer.scheduleId) createFromTransfer(transfer)
     setStatus(transfer, STATUS.SENT)
     notifyBoth('SENT', transfer)
   } catch (error) {
@@ -385,6 +456,29 @@ async function pay(transfer) {
     notifyBoth('FAILED', transfer)
   }
   return transfer
+}
+
+/**
+ * One monthly payment of a regular payment. The owner approved it when she
+ * confirmed the first one, so it is sent without asking again. It is hers
+ * alone: no helper is attached, so no helper sees it.
+ * @param {object} schedule see schedules.js
+ * @returns {Promise<object>} the transfer, SENT or FAILED
+ */
+export async function payScheduled(schedule) {
+  const transfer = blankTransfer(db.users[schedule.ownerId], {
+    direct: true,
+    status: STATUS.APPROVED,
+    scheduleId: schedule.id,
+    description: schedule.description,
+    reference: schedule.reference,
+    recipient: { ...schedule.recipient },
+    sourceAmount: schedule.amount,
+    targetCurrency: schedule.targetCurrency,
+  })
+  await applyQuote(transfer)
+  db.transfers.push(transfer)
+  return pay(transfer)
 }
 
 // --------------------------------------------------------- helper actions

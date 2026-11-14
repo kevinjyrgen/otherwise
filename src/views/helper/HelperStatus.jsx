@@ -47,6 +47,10 @@ export default function HelperStatus({ transfer }) {
         <p className="mt-3 font-semibold">{reasonText.helper[transfer.reason]}</p>
       )}
       <p className="mt-2 text-white/60">{t.text[status](owner)}</p>
+      {/* The regular payment is the owner's from here on. */}
+      {status === 'SENT' && transfer.repeat && (
+        <p className="mt-2 text-white/60">{t.regularStarted(owner)}</p>
+      )}
 
       {transfer.sourceAmount && (
         <div className="mt-6 rounded-2xl bg-card px-4">
@@ -55,9 +59,11 @@ export default function HelperStatus({ transfer }) {
               [t.description, transfer.description],
               [t.to, transfer.recipient.name],
               [t.iban, formatIban(transfer.recipient.iban)],
+              transfer.reference && [t.reference, transfer.reference],
               [t.amount, formatMoney(transfer.sourceAmount, transfer.sourceCurrency)],
               [t.recipientGets, formatMoney(transfer.targetAmount, transfer.targetCurrency)],
               [t.fee, formatMoney(transfer.fee, transfer.sourceCurrency)],
+              transfer.repeat && [t.repeatLabel, t.repeat(transfer.repeat.dayOfMonth)],
             ]}
           />
         </div>

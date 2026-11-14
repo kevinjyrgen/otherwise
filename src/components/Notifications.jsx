@@ -4,11 +4,14 @@ import { useLive } from '../live.js'
 import t, { notificationText } from './notifications.strings.js'
 
 /**
- * Where a notification leads: the transfer it is about, or, for news about
- * the helper link, the owner's Helper page / the helper's home (invitations).
+ * Where a notification leads: the transfer it is about, the owner's regular
+ * payments, or, for news about the helper link, the owner's Helper page / the
+ * helper's home (invitations).
  */
 function linkFor(role, notification) {
   if (notification.transferId) return `/${role}/transfers/${notification.transferId}`
+  // News about a regular payment (tomorrow's reminder, a skipped month).
+  if (notification.kind.startsWith('REGULAR_')) return '/owner/payments'
   return role === 'owner' ? '/owner/helper' : '/helper'
 }
 

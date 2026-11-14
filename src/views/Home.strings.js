@@ -10,6 +10,7 @@ export default {
   balances: 'Your balances',
   activity: 'Recent activity',
   guidedTransfer: 'Guided transfer',
+  regularPayment: 'Regular payment',
   sentByYou: 'Sent by you · Today',
 
   sendMoney: 'Send money',

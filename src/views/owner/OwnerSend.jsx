@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import Avatar from '../../components/Avatar.jsx'
 import Button from '../../components/Button.jsx'
 import Shell from '../../components/Shell.jsx'
 import StatusIcon from '../../components/StatusIcon.jsx'
@@ -14,11 +15,21 @@ const inputClass = 'mt-3 min-h-16 w-full rounded-2xl bg-card px-5 text-xl'
  * her help setting covers it, nothing is sent and it becomes a help request
  * ("Mari will prepare this for you"). Otherwise she fills in the recipient
  * and sends it herself.
+ *
+ * Someone she saved earlier needs no typing: coming from the Recipients page
+ * (`?to=…`) the details step is skipped, and on the details step her saved
+ * people are offered above the empty fields. The help setting applies to them
+ * like to anyone else.
  */
 export default function OwnerSend() {
-  const { me, send } = useLive()
+  const { me, send, recipients } = useLive()
   const navigate = useNavigate()
-  // 'amount' → 'details' → 'check', or 'amount' → 'help'.
+  const [params] = useSearchParams()
+  // The saved recipient she came here to pay, if any. Fixed for this visit.
+  const [preset] = useState(() => recipients.find((r) => r.id === params.get('to')) ?? null)
+  // The saved recipient being paid: the preset one, or one picked on the details step.
+  const [picked, setPicked] = useState(preset)
+  // 'amount' → 'details' → 'check', or 'amount' → 'help'. A preset recipient skips 'details'.
   const [step, setStep] = useState('amount')
   const [amountText, setAmountText] = useState('')
   const [name, setName] = useState('')
@@ -45,18 +56,42 @@ export default function OwnerSend() {
   const checkAmount = () =>
     run(async () => {
       const link = me.link
-      const { outcome } = await send('/owner/send', { amount })
+      // With a saved recipient this call only checks; if it becomes a help
+      // request, the helper gets the recipient already filled in.
+      const { outcome } = await send('/owner/send', {
+        amount,
+        ...(preset && { recipientId: preset.id, checkOnly: true }),
+      })
       if (outcome === 'HELP_REQUESTED') {
-        setHelped({ helper: link.helper.name.split(' ')[0], ...link })
+        setHelped({ ...link, helper: link.helper.name.split(' ')[0] })
         setStep('help')
       } else {
-        setStep('details')
+        setStep(preset ? 'check' : 'details')
       }
     })
 
+  /** On the details step: a saved person instead of typing. */
+  const pick = (recipient) => {
+    setPicked(recipient)
+    setStep('check')
+  }
+
+  /** Back from the check screen, to wherever the recipient came from. */
+  const backFromCheck = () => {
+    if (preset) return setStep('amount')
+    setPicked(null)
+    setStep('details')
+  }
+
+  // What the check screen shows and what is sent.
+  const to = picked ?? { name, iban: iban.replace(/\s+/g, '').toUpperCase() }
+
   const sendNow = () =>
     run(async () => {
-      const { outcome, transfer } = await send('/owner/send', { amount, recipient: { name, iban } })
+      const { outcome, transfer } = await send('/owner/send', {
+        amount,
+        ...(picked ? { recipientId: picked.id } : { recipient: { name, iban } }),
+      })
       // The setting may have changed since step 1: then it became a help request after all.
       navigate(outcome === 'HELP_REQUESTED' ? '/owner/guided' : `/owner/transfers/${transfer.id}`)
     })
@@ -65,7 +100,9 @@ export default function OwnerSend() {
     <Shell>
       {step === 'amount' && (
         <>
-          <h1 className="mt-4 text-4xl font-extrabold tracking-tight">{t.amountTitle}</h1>
+          <h1 className="mt-4 text-4xl font-extrabold tracking-tight">
+            {preset ? t.amountTitleTo(preset.name) : t.amountTitle}
+          </h1>
           <div className="mt-8 flex items-center rounded-2xl border border-white/10 bg-card pr-5 focus-within:border-bright-green">
             <input
               inputMode="decimal"
@@ -82,7 +119,7 @@ export default function OwnerSend() {
             <Button size="lg" onClick={checkAmount} disabled={busy || !(amount > 0)}>
               {t.next}
             </Button>
-            <Button size="lg" variant="secondary" to="/owner">
+            <Button size="lg" variant="secondary" to={preset ? '/owner/recipients' : '/owner'}>
               {t.back}
             </Button>
           </div>
@@ -92,7 +129,30 @@ export default function OwnerSend() {
       {step === 'details' && (
         <>
           <h1 className="mt-4 text-4xl font-extrabold tracking-tight">{t.detailsTitle}</h1>
-          <label className="mt-8 block text-xl">
+          {recipients.length > 0 && (
+            <section className="mt-6">
+              <h2 className="text-xl text-white/70">{t.savedTitle}</h2>
+              <ul className="mt-3 flex flex-col gap-3">
+                {recipients.map((recipient) => (
+                  <li key={recipient.id}>
+                    <button
+                      type="button"
+                      onClick={() => pick(recipient)}
+                      className="flex min-h-20 w-full items-center gap-4 rounded-3xl bg-card px-5 py-3 text-left transition hover:bg-card-hover active:scale-[0.98]"
+                    >
+                      <Avatar name={recipient.name} />
+                      <span className="min-w-0 flex-1 text-2xl font-bold break-words">{recipient.name}</span>
+                      <span aria-hidden="true" className="text-2xl text-white/40">
+                        ›
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <h2 className="mt-8 text-xl text-white/70">{t.someoneNew}</h2>
+            </section>
+          )}
+          <label className={`${recipients.length > 0 ? 'mt-4' : 'mt-8'} block text-xl`}>
             {t.name}
             <input value={name} onChange={(event) => setName(event.target.value)} autoComplete="off" className={inputClass} />
           </label>
@@ -117,13 +177,11 @@ export default function OwnerSend() {
           <section className="mt-6 flex flex-col gap-7 rounded-3xl bg-card p-6">
             <div>
               <p className="text-lg text-white/60">{t.to}</p>
-              <p className="mt-1 text-3xl font-bold break-words">{name}</p>
+              <p className="mt-1 text-3xl font-bold break-words">{to.name}</p>
             </div>
             <div>
               <p className="text-lg text-white/60">{t.account}</p>
-              <p className="mt-1 text-2xl font-semibold break-words">
-                {formatIban(iban.replace(/\s+/g, '').toUpperCase())}
-              </p>
+              <p className="mt-1 text-2xl font-semibold break-words">{formatIban(to.iban)}</p>
             </div>
             <div>
               <p className="text-lg text-white/60">{t.amount}</p>
@@ -137,7 +195,7 @@ export default function OwnerSend() {
             <Button size="lg" onClick={sendNow} disabled={busy}>
               {busy ? t.sending : t.send}
             </Button>
-            <Button size="lg" variant="secondary" onClick={() => setStep('details')} disabled={busy}>
+            <Button size="lg" variant="secondary" onClick={backFromCheck} disabled={busy}>
               {t.back}
             </Button>
           </div>

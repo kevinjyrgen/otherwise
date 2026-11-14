@@ -45,6 +45,11 @@ router.get('/transfers/:id/balance', (req, res) =>
   res.json(transfers.balanceFor(req.user, req.params.id)),
 )
 
+/** The bill photo the owner sent with her request. */
+router.get('/transfers/:id/photo', (req, res) =>
+  res.set('Cache-Control', 'private, no-store').sendFile(transfers.photoFor(req.user, req.params.id)),
+)
+
 // ---- invitations: only the invited person can answer.
 
 router.post('/invitations/:id/accept', (req, res) => {

@@ -5,14 +5,20 @@ import { useLive } from '../../live.js'
 import Home from '../Home.jsx'
 import NotInPrototype from '../NotInPrototype.jsx'
 import OwnerAddHelper from './OwnerAddHelper.jsx'
+import OwnerBill from './OwnerBill.jsx'
 import OwnerConfirm from './OwnerConfirm.jsx'
 import OwnerDecline from './OwnerDecline.jsx'
 import OwnerHelper from './OwnerHelper.jsx'
 import OwnerHome from './OwnerHome.jsx'
+import OwnerPayments from './OwnerPayments.jsx'
+import OwnerRecipients from './OwnerRecipients.jsx'
 import OwnerRequest from './OwnerRequest.jsx'
 import OwnerResult from './OwnerResult.jsx'
 import OwnerReview from './OwnerReview.jsx'
 import OwnerSend from './OwnerSend.jsx'
+
+/** Menu sections that are real pages for the owner (the helper still gets the placeholder). */
+const BUILT = { recipients: <OwnerRecipients />, payments: <OwnerPayments /> }
 
 /** Picks the screen for one transfer from its status. */
 function OwnerTransfer() {
@@ -33,9 +39,14 @@ export default function OwnerArea() {
         <Route index element={<Home />} />
         <Route path="guided" element={<OwnerHome />} />
         {PLACEHOLDER_SECTIONS.map((section) => (
-          <Route key={section} path={section} element={<NotInPrototype section={section} />} />
+          <Route
+            key={section}
+            path={section}
+            element={BUILT[section] ?? <NotInPrototype section={section} />}
+          />
         ))}
         <Route path="request" element={<OwnerRequest />} />
+        <Route path="bill" element={<OwnerBill />} />
         <Route path="send" element={<OwnerSend />} />
         <Route path="helper" element={<OwnerHelper />} />
         <Route path="helper/add" element={<OwnerAddHelper />} />

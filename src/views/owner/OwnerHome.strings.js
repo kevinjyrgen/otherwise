@@ -7,6 +7,7 @@ export default {
   askTitle: 'Want to send money?',
   askText: (helper) => `${helper} can fill in the details. You check them and send the money yourself.`,
   ask: 'Prepare it for me',
+  askBill: 'I have a bill to pay',
   preparing: (helper) => `${helper} is preparing your transfer. We will tell you when it is ready.`,
   noHelperTitle: 'You do not have a helper yet',
   noHelperText: 'A helper is someone you trust who fills in a transfer for you. You always send the money yourself.',

@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Avatar from '../components/Avatar.jsx'
 import Button from '../components/Button.jsx'
 import Shell from '../components/Shell.jsx'
+import { formatDay } from '../format.js'
 import t from './RolePicker.strings.js'
 
 /** One tappable card per demo user. */
@@ -24,9 +25,45 @@ function RoleCard({ to, name, role }) {
   )
 }
 
-/** Landing screen: pick which demo user this window is, or reset the demo to a starting point. */
+/**
+ * Landing screen: pick which demo user this window is, reset the demo to a
+ * starting point, or move the demo's calendar so a regular payment can be shown.
+ */
 export default function RolePicker() {
   const [message, setMessage] = useState('')
+  // The demo's calendar: { today, nextPayment }. Null until the server answered.
+  const [clock, setClock] = useState(null)
+  const [clockMessage, setClockMessage] = useState('')
+
+  const loadClock = useCallback(async () => {
+    try {
+      const response = await fetch('/api/dev/clock')
+      if (response.ok) setClock(await response.json())
+    } catch {
+      // Server not running: the reset buttons already say so when tapped.
+    }
+  }, [])
+
+  useEffect(() => {
+    loadClock()
+  }, [loadClock])
+
+  /** Moves the demo's calendar; regular payments due on the way happen. */
+  const advance = async (to) => {
+    setClockMessage('')
+    try {
+      const response = await fetch('/api/dev/advance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to }),
+      })
+      const data = await response.json()
+      if (response.ok) setClock(data)
+      else setClockMessage(data.error || t.clockFailed)
+    } catch {
+      setClockMessage(t.clockFailed)
+    }
+  }
 
   /** Reseeds the server; open windows refresh by themselves. */
   const reset = async (scenario) => {
@@ -37,6 +74,8 @@ export default function RolePicker() {
         body: JSON.stringify({ scenario }),
       })
       setMessage(response.ok ? t.resetDone : t.resetFailed)
+      setClockMessage('')
+      loadClock()
     } catch {
       setMessage(t.resetFailed)
     }
@@ -65,6 +104,31 @@ export default function RolePicker() {
       {message && (
         <p role="status" className="mt-4 text-center font-semibold text-bright-green">
           {message}
+        </p>
+      )}
+
+      <h2 className="mt-12 font-bold text-white/60">{t.clockTitle}</h2>
+      {clock && (
+        <p className="mt-3 rounded-3xl bg-card p-5">
+          <span className="block text-lg font-bold">{t.clockToday(formatDay(clock.today))}</span>
+          <span className="mt-1 block text-white/60">
+            {clock.nextPayment ? t.clockNext(formatDay(clock.nextPayment)) : t.clockNone}
+          </span>
+        </p>
+      )}
+      <div className="mt-3 flex flex-col gap-3">
+        <Button variant="secondary" onClick={() => advance('reminder')} disabled={!clock?.nextPayment}>
+          {t.clockReminder}
+        </Button>
+        <p className="-mt-1 text-center text-sm text-white/50">{t.clockReminderHint}</p>
+        <Button variant="secondary" onClick={() => advance('next-day')}>
+          {t.clockNextDay}
+        </Button>
+        <p className="-mt-1 text-center text-sm text-white/50">{t.clockNextDayHint}</p>
+      </div>
+      {clockMessage && (
+        <p role="status" className="mt-4 text-center font-semibold text-red-300">
+          {clockMessage}
         </p>
       )}
     </Shell>

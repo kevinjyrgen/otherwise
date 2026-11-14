@@ -36,10 +36,16 @@ export default function HelperHome() {
       {todo.map((transfer) => (
         <section key={transfer.id} className="mt-3 rounded-3xl bg-card p-5">
           <p className="text-lg font-bold">
-            {transfer.requestedAmount
-              ? t.requestedAmount(transfer.ownerName, formatMoney(transfer.requestedAmount, transfer.sourceCurrency))
-              : t.requested(transfer.ownerName)}
+            {transfer.hasPhoto
+              ? t.requestedBill(transfer.ownerName)
+              : transfer.requestedAmount
+                ? t.requestedAmount(transfer.ownerName, formatMoney(transfer.requestedAmount, transfer.sourceCurrency))
+                : t.requested(transfer.ownerName)}
           </p>
+          {/* She picked someone she saved: already filled in, for the helper to check. */}
+          {transfer.status === 'REQUESTED' && transfer.recipient.name && (
+            <p className="mt-1 text-white/70">{t.requestedTo(transfer.recipient.name)}</p>
+          )}
           {transfer.note && <p className="mt-1 text-white/70">“{transfer.note}”</p>}
           <Button className="mt-4" to={`/helper/transfers/${transfer.id}`}>
             {transfer.status === 'DRAFT' ? t.resume : t.start}

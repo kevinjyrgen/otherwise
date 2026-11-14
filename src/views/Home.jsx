@@ -82,7 +82,11 @@ export default function Home() {
         .filter((x) => x.status === 'SENT')
         .map((x) => ({
           title: x.recipient.name,
-          detail: x.direct ? t.sentByYou : `${t.guidedTransfer} · ${x.description}`,
+          detail: x.regular
+            ? `${t.regularPayment} · ${x.description}`
+            : x.direct
+              ? t.sentByYou
+              : `${t.guidedTransfer} · ${x.description}`,
           amount: -x.total,
           currency: x.sourceCurrency,
         }))

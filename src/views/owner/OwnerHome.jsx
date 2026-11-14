@@ -46,6 +46,10 @@ export default function OwnerHome() {
           <Button size="lg" className="mt-5" to="/owner/request">
             {t.ask}
           </Button>
+          {/* The easy way to ask: a photo of the bill instead of words. */}
+          <Button size="lg" variant="secondary" className="mt-3" to="/owner/bill">
+            {t.askBill}
+          </Button>
         </section>
       )}
 

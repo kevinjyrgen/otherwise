@@ -2,6 +2,7 @@
  * Seed data for the demo. There is no real login: these users are the whole
  * world. Pure data only, so both the server and the reset script can import it.
  */
+import { isoDay } from './dates.js'
 
 /** Transfer statuses. REQUESTED → DRAFT → PENDING_APPROVAL → APPROVED → SENT, plus the three end states. */
 export const STATUS = Object.freeze({
@@ -23,11 +24,18 @@ export const LINK = Object.freeze({
   REMOVED: 'REMOVED',
 })
 
+/** Statuses of a regular payment. ACTIVE until the owner stops it. */
+export const SCHEDULE = Object.freeze({
+  ACTIVE: 'ACTIVE',
+  STOPPED: 'STOPPED',
+})
+
 /**
  * Builds a fresh database.
  * @param {{withHelper?: boolean}} [options] `withHelper: false` starts with no
  *   helper, to demo adding one. The default has Mari already active.
- * @returns {{users: Object, links: Array, transfers: Array, notifications: Array}}
+ * @returns {{users: Object, links: Array, transfers: Array, notifications: Array,
+ *   recipients: Array, schedules: Array, clock: Object}}
  */
 export function seedData({ withHelper = true } = {}) {
   const now = new Date().toISOString()
@@ -86,9 +94,22 @@ export function seedData({ withHelper = true } = {}) {
     // Shape of a transfer:
     // { id, status, ownerId, helperId, direct, note, requestedAmount, description,
     //   sourceAmount, sourceCurrency, targetAmount, targetCurrency, rate, fee, total,
-    //   recipient: { name, iban, email }, reason, paymentId, createdAt, updatedAt }
+    //   recipient: { name, iban, email }, reference, reason, paymentId, createdAt, updatedAt,
+    //   photo (file name of the bill the owner sent, or null),
+    //   repeat ({ dayOfMonth } if it should become a regular payment, or null),
+    //   scheduleId (the regular payment this transfer started or belongs to, or null) }
     transfers: [],
     // { id, userId, transferId, kind, read, createdAt, data }
     notifications: [],
+    // People the owner saved after paying them once:
+    // { id, ownerId, name, iban, email, createdAt }
+    recipients: [],
+    // Regular payments the owner approved:
+    // { id, ownerId, status, description, reference, recipient, amount, targetCurrency,
+    //   dayOfMonth, nextDate, skipNext, preparedBy, firstTransferId, createdAt, updatedAt }
+    schedules: [],
+    // The demo's calendar. offsetDays is how far the demo has been moved ahead
+    // of the real date; processedUntil is the last day regular payments ran for.
+    clock: { offsetDays: 0, processedUntil: isoDay() },
   }
 }

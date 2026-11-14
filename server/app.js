@@ -9,13 +9,15 @@ import { authenticate, requireRole, selfView } from './auth.js'
 import { attach, emitAll, userRoom } from './events.js'
 import helperRoutes from './routes/helper.js'
 import ownerRoutes from './routes/owner.js'
+import { advance, clockView } from './schedules.js'
 import { db, reset, save } from './store.js'
 import { RuleError } from './errors.js'
 
 /** @returns {{app: import('express').Express, httpServer: import('node:http').Server}} */
 export function createApp() {
   const app = express()
-  app.use(express.json())
+  // Roomy enough for a photo of a bill (the app shrinks it before sending).
+  app.use(express.json({ limit: '8mb' }))
 
   const httpServer = createServer(app)
   const io = new Server(httpServer)
@@ -38,6 +40,17 @@ export function createApp() {
     reset({ withHelper: req.body?.scenario !== 'no-helper' })
     emitAll('reset')
     res.json({ ok: true })
+  })
+
+  // Demo only: the calendar that regular payments run on, for the /demo page.
+  app.get('/api/dev/clock', (req, res) => res.json(clockView()))
+
+  // Demo only: moves that calendar ahead so a regular payment can be shown.
+  // to "reminder" = the day before the next regular payment; anything else = one day on.
+  app.post('/api/dev/advance', async (req, res) => {
+    const clock = await advance(req.body?.to)
+    emitAll('changed')
+    res.json(clock)
   })
 
   // Everything below needs a known user.
@@ -69,6 +82,9 @@ export function createApp() {
   // eslint-disable-next-line no-unused-vars
   app.use((error, req, res, next) => {
     if (error instanceof RuleError) return res.status(error.status).json({ error: error.message })
+    if (error.type === 'entity.too.large') {
+      return res.status(413).json({ error: 'This photo is too big. Please try again.' })
+    }
     console.error(error)
     res.status(500).json({ error: 'Something went wrong. Please try again.' })
   })

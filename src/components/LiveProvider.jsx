@@ -24,12 +24,16 @@ export default function LiveProvider({ role, children }) {
   const call = useCallback((path, options) => api(userId, path, options), [userId])
 
   const refresh = useCallback(async () => {
-    const [me, transfers, notifications] = await Promise.all([
+    // Saved recipients and regular payments are the owner's alone.
+    const isOwner = role === 'owner'
+    const [me, transfers, notifications, recipients, schedules] = await Promise.all([
       call('/me'),
       call(`/${role}/transfers`),
       call('/notifications'),
+      isOwner ? call('/owner/recipients') : [],
+      isOwner ? call('/owner/schedules') : [],
     ])
-    setData({ me, transfers, notifications })
+    setData({ me, transfers, notifications, recipients, schedules })
   }, [call, role])
 
   /** Calls the API, then refetches so the screen shows the result at once. */

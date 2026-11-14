@@ -1,4 +1,6 @@
 /** All text of the helper's status screen (after submitting), in one place for translation. */
+import { ordinal } from '../../format.js'
+
 export default {
   title: {
     PENDING_APPROVAL: (owner) => `Waiting for ${owner} to confirm`,
@@ -22,6 +24,11 @@ export default {
   amount: 'Amount',
   recipientGets: 'Recipient gets',
   fee: 'Fee',
+  reference: 'Reference',
+  repeatLabel: 'How often',
+  repeat: (dayOfMonth) => `Every month on the ${ordinal(dayOfMonth)}`,
+  regularStarted: (owner) =>
+    `${owner}'s regular payment has started. Only she can skip a month or stop it.`,
   cancel: 'Cancel transfer',
   cancelQuestion: (owner) => `Cancel this transfer? ${owner} will no longer be able to confirm it.`,
   home: 'Back to overview',

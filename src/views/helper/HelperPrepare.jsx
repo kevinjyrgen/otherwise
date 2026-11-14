@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
+import BillPhoto from '../../components/BillPhoto.jsx'
 import Button from '../../components/Button.jsx'
 import Rows from '../../components/Rows.jsx'
 import Shell from '../../components/Shell.jsx'
 import Stepper from '../../components/Stepper.jsx'
-import { formatIban, formatMoney } from '../../format.js'
+import { formatIban, formatMoney, ordinal } from '../../format.js'
 import { useLive } from '../../live.js'
 import t from './HelperPrepare.strings.js'
 
 const MAX_DESCRIPTION = 120
+/** Days of the month a regular payment can go out on. The server accepts exactly these. */
+const DAYS = Array.from({ length: 28 }, (_, index) => index + 1)
 const inputClass = 'mt-2 min-h-12 w-full rounded-xl bg-card px-4 placeholder:text-white/30'
 
 /** "12,5" and "12.5" both mean 12.5. */
@@ -27,6 +30,10 @@ function Field({ label, ...props }) {
  * Steps 3–5: the helper's form, shaped like a send-money flow: amount,
  * recipient, review with a description, then "Send for approval". Each
  * "Continue" saves the draft on the server, so nothing is lost on reload.
+ *
+ * If the owner sent a photo of a bill it stays on top of every step, to read
+ * the details from. On the last step the helper can make it a regular
+ * payment; the owner approves that together with the transfer.
  * @param {{transfer: object}} props a REQUESTED or DRAFT transfer
  */
 export default function HelperPrepare({ transfer }) {
@@ -40,7 +47,11 @@ export default function HelperPrepare({ transfer }) {
     name: transfer.recipient.name,
     iban: transfer.recipient.iban,
     email: transfer.recipient.email,
+    reference: transfer.reference,
     description: transfer.description,
+    // 'ONCE', or 'MONTH' with the day of the month it goes out on.
+    repeat: transfer.repeat ? 'MONTH' : 'ONCE',
+    day: transfer.repeat?.dayOfMonth ?? 1,
   })
   const [currencies, setCurrencies] = useState([transfer.targetCurrency])
   const [quote, setQuote] = useState(null)
@@ -98,13 +109,18 @@ export default function HelperPrepare({ transfer }) {
 
   const saveRecipient = () =>
     run(async () => {
-      await send(path, { recipient: { name: form.name, iban: form.iban, email: form.email } }, 'PUT')
+      await send(
+        path,
+        { recipient: { name: form.name, iban: form.iban, email: form.email }, reference: form.reference },
+        'PUT',
+      )
       setStep(2)
     })
 
   const submit = () =>
     run(async () => {
-      await send(path, { description: form.description }, 'PUT')
+      const repeat = form.repeat === 'MONTH' ? { dayOfMonth: Number(form.day) } : null
+      await send(path, { description: form.description, repeat }, 'PUT')
       // After this the transfer is PENDING_APPROVAL and this form is replaced
       // by the waiting screen.
       await send(`${path}/submit`)
@@ -124,6 +140,13 @@ export default function HelperPrepare({ transfer }) {
         <p className="mt-6 rounded-2xl bg-card p-4 text-sm">
           <span className="text-white/60">{t.note(owner)}: </span>“{transfer.note}”
         </p>
+      )}
+
+      {transfer.hasPhoto && (
+        <section className="mt-4 rounded-2xl bg-card p-4">
+          <p className="mb-3 text-sm text-white/60">{t.photo(owner)}</p>
+          <BillPhoto transferId={transfer.id} />
+        </section>
       )}
 
       {step === 0 && (
@@ -192,6 +215,7 @@ export default function HelperPrepare({ transfer }) {
           <Field label={t.name} value={form.name} onChange={set('name')} autoComplete="off" />
           <Field label={t.iban} value={form.iban} onChange={set('iban')} autoComplete="off" autoCapitalize="characters" />
           <Field label={t.email} value={form.email} onChange={set('email')} type="email" autoComplete="off" />
+          <Field label={t.reference} value={form.reference} onChange={set('reference')} maxLength={35} autoComplete="off" />
         </>
       )}
 
@@ -203,6 +227,7 @@ export default function HelperPrepare({ transfer }) {
               rows={[
                 [t.to, transfer.recipient.name],
                 [t.iban, formatIban(transfer.recipient.iban)],
+                transfer.reference && [t.referenceShort, transfer.reference],
                 [t.amount, formatMoney(transfer.sourceAmount, transfer.sourceCurrency)],
                 [t.recipientGets, formatMoney(transfer.targetAmount, transfer.targetCurrency)],
                 [t.fee, formatMoney(transfer.fee, transfer.sourceCurrency)],
@@ -228,6 +253,41 @@ export default function HelperPrepare({ transfer }) {
               {form.description.length}/{MAX_DESCRIPTION}
             </span>
           </p>
+
+          <fieldset className="mt-6">
+            <legend className="text-sm text-white/70">{t.repeatLabel}</legend>
+            <div className="mt-2 grid grid-cols-2 gap-3">
+              {['ONCE', 'MONTH'].map((choice) => (
+                <Button
+                  key={choice}
+                  variant={form.repeat === choice ? 'primary' : 'secondary'}
+                  aria-pressed={form.repeat === choice}
+                  onClick={() => setForm({ ...form, repeat: choice })}
+                >
+                  {t.repeat[choice]}
+                </Button>
+              ))}
+            </div>
+            {form.repeat === 'MONTH' && (
+              <>
+                <label className="mt-4 flex items-center justify-between gap-4 text-sm text-white/70">
+                  {t.repeatDay}
+                  <select
+                    value={form.day}
+                    onChange={set('day')}
+                    className="min-h-12 rounded-xl bg-card px-4 text-base font-bold text-white"
+                  >
+                    {DAYS.map((day) => (
+                      <option key={day} value={day}>
+                        {ordinal(day)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <p className="mt-3 text-sm text-white/50">{t.repeatHint(owner)}</p>
+              </>
+            )}
+          </fieldset>
         </>
       )}
 

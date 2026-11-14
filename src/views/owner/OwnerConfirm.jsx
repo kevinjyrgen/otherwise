@@ -8,7 +8,8 @@ import t from './OwnerConfirm.strings.js'
 
 /**
  * Step 9: the second confirmation. Only the three facts that matter, large:
- * what it is for, who gets it, how much.
+ * what it is for, who gets it, how much. A regular payment adds a fourth:
+ * how often.
  */
 export default function OwnerConfirm() {
   const { id } = useParams()
@@ -58,6 +59,13 @@ export default function OwnerConfirm() {
             {formatMoney(transfer.sourceAmount, transfer.sourceCurrency)}
           </p>
         </div>
+        {/* A regular payment: her yes also covers the months that follow. */}
+        {transfer.repeat && (
+          <div>
+            <p className="text-lg text-white/60">{t.howOften}</p>
+            <p className="mt-1 text-3xl font-bold">{t.repeats(transfer.repeat.dayOfMonth)}</p>
+          </div>
+        )}
       </section>
 
       {error && <p className="mt-4 text-xl text-red-300">{error}</p>}

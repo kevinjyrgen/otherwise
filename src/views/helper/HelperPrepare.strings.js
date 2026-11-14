@@ -2,6 +2,7 @@
 export default {
   steps: ['Amount', 'Recipient', 'Review'],
   note: (owner) => `${owner}'s note`,
+  photo: (owner) => `${owner} sent this photo of the bill. Read the details from it.`,
 
   // Step 1
   amountTitle: 'How much should be sent?',
@@ -19,6 +20,8 @@ export default {
   name: 'Full name of the account holder',
   iban: 'IBAN',
   email: 'Their email (optional)',
+  reference: 'Reference number on the bill (optional)',
+  referenceShort: 'Reference',
 
   // Step 3
   reviewTitle: 'Review and describe',
@@ -28,6 +31,11 @@ export default {
   arrival: (days) => (days === 0 ? 'Today' : 'Next working day'),
   descriptionLabel: (owner) => `Describe it for ${owner}`,
   descriptionHint: "Write it the way you'd say it to her, e.g. 'Rent for December to your landlord'",
+  repeatLabel: 'How often should it be paid?',
+  repeat: { ONCE: 'Just this once', MONTH: 'Every month' },
+  repeatDay: 'Day of the month',
+  repeatHint: (owner) =>
+    `The first payment is sent when ${owner} confirms, then the same amount goes out on this day every month. ${owner} approves this once. Only she can skip a month or stop it.`,
   submit: 'Send for approval',
   submitNote: (owner) => `You cannot send the money. ${owner} checks it and confirms it herself.`,
 

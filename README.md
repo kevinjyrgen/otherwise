@@ -28,6 +28,12 @@ For the demo, put two browser windows side by side: `/owner` on the left, `/help
 - **Guided Transfers**: the owner asks for a transfer, the helper prepares it, the owner approves and confirms.
 - **Send money** (owner's Home): a basic transfer. Depending on her help setting it is sent directly or becomes a request to her helper.
 
+Three things make it easier still:
+
+- **Pay a bill from a photo**: in Guided Transfers the owner taps **I have a bill to pay** and takes a photo of the bill. She types nothing. The helper reads the details off the photo, and the owner sees the same photo again when she checks the transfer.
+- **Regular payments** (owner's **Payments**): on the last step the helper can choose **Every month** and a day. The owner approves it once, together with the first payment. After that it goes out by itself. She is told the day before and can skip a month or stop it.
+- **Saved recipients** (owner's **Recipients**): after money was sent, the owner can save the recipient with one tap. Next time she picks the name and types only the amount.
+
 ## Reset the demo
 
 There are two starting points, as buttons on `/demo`:
@@ -41,7 +47,16 @@ From the terminal:
 npm run reset
 ```
 
-This is the same as "Mari already added". Both ways put the balance back to 1,240.50 EUR and remove all transfers and notifications. They work while the app is running; open windows update by themselves.
+This is the same as "Mari already added". Both ways put the balance back to 1,240.50 EUR, remove all transfers, notifications, bill photos, saved recipients and regular payments, and put the demo date back to today. They work while the app is running; open windows update by themselves.
+
+## Move the date
+
+Regular payments run on the demo's own calendar, so a month can pass during a presentation. Two buttons on `/demo`:
+
+- **Jump to the day before the next payment**: Tiiu gets "goes out tomorrow" and can still skip it.
+- **Go to the next day**: on the payment day the money goes out.
+
+Without the buttons the calendar follows the real date.
 
 ## The rules
 
@@ -63,6 +78,23 @@ Helper link:
 - The helper sees the owner's balance only while she is preparing a transfer the owner asked for. At any other moment the server refuses.
 - The helper never sees transfers the owner sends on her own.
 
+Bill photo:
+
+- Only the owner can attach a photo, and only when she asks for a transfer. It must really be a picture (JPEG, PNG or WebP, up to 4 MB).
+- Only the two people of that transfer can open it: the owner and the helper she asked.
+
+Regular payments:
+
+- A regular payment starts in one way only: the helper marks a transfer "every month" (day 1 to 28) and the owner confirms it. If she declines, or the first payment fails, nothing regular starts.
+- From then on it is the owner's alone. Only she can skip the next payment or stop it. The helper has no route for it and does not see the monthly payments.
+- The owner is told the day before each payment. A payment that cannot be paid fails that month and is tried again the next month.
+- Removing the helper does not stop a regular payment.
+
+Saved recipients:
+
+- Only the owner can save a recipient, and only from a transfer that was sent. Name and account number are copied from that transfer, never typed. The helper cannot add to the list or see it.
+- A saved recipient does not get around the help setting. Over her limit the transfer still goes to her helper, with the recipient already filled in.
+
 Help setting:
 
 - "Help me with every transfer": every Send money becomes a request to the helper.
@@ -81,6 +113,8 @@ Help setting:
   | Jaan Kask | `jaan.kask@example.com` | `+372 5550 5678` | `@jaankask` |
   | Liis Saar | `liis.saar@example.com` | `+372 5550 9012` | `@liissaar` |
 
+- **Sample bill**: `public/sample-bill.png`, a made-up electricity bill. On the bill screen tap **No bill at hand? Use a sample bill**.
+- **Date**: regular payments use the demo calendar, see "Move the date".
 - **Home page**: the second balance and the activity rows are made up. Tiiu's EUR balance is real and drops after a transfer.
 
 ## Demo script 1: a guided transfer (60 seconds)
@@ -129,13 +163,37 @@ If you have more time:
 - **Remove helper**: Left, **Helper** → **Remove helper** → **Yes, remove** while Mari has an unfinished transfer. It is cancelled and Mari is told.
 - **Decline the invite**: at 0:33 tap **Decline** instead. Tiiu sees "Declined" and can ask someone else.
 
+## Demo script 3: a bill, every month, and next time on her own (90 seconds)
+
+Before you start: on `/demo` tap **Reset: Mari already added**. Owner window on the left, helper window on the right, `/demo` in a third tab.
+
+| Time | Window | Do | Say |
+| --- | --- | --- | --- |
+| 0:00 | Left | Open **Guided Transfers**, tap **I have a bill to pay**. | "Tiiu got her electricity bill. Typing an account number and a reference is the hardest part for her." |
+| 0:06 | Left | Tap **Take a photo of the bill** (or **Use a sample bill**). Tap **Send to Mari**. | "So she does not type. She takes a photo and sends it to Mari." |
+| 0:14 | Right | The notification appears. Tap it. Point at the photo. | "Mari gets the bill itself, not a description of it." |
+| 0:20 | Right | Type `48.90`, **Continue**. Name `Northside Electricity Ltd`, IBAN `EE94 7700 7710 0234 5678`, reference `2026110457`, **Continue**. | "She fills it in from the photo." |
+| 0:35 | Right | Write `Your electricity bill`. Tap **Every month**, choose the **20th**. Tap **Send for approval**. | "This bill comes every month, so Mari sets it up as a regular payment. She still cannot send anything." |
+| 0:45 | Left | Tap the notification. Point at the photo, then at "This is a regular payment". Tap **Approve**. | "Tiiu sees her own photo next to what Mari entered, and she is told clearly that it repeats." |
+| 0:55 | Left | Point at "Now, and then every month on the 20th". Tap **Confirm and send**. | "She approves it once. Only she can." |
+| 1:02 | Left | Tap **Save Northside Electricity Ltd**. | "And she saves the recipient with one tap." |
+| 1:08 | `/demo` | Tap **Jump to the day before the next payment**. | "A month later." |
+| 1:12 | Left | The notification appears. Tap it, point at **Skip the next one**. | "The day before, Tiiu is told, and she can skip it or stop it. Mari cannot, and she does not see these payments." |
+| 1:20 | `/demo`, Left | Tap **Go to the next day**. Open Tiiu's **Home**. | "The bill is paid. Nobody typed anything this month." |
+
+If you have more time:
+
+- **Pay a saved recipient**: Left, **Recipients** → **Send money** → `30` → **Send**. No account number to type.
+- **Over the limit**: the same with `250`. It is not sent. Mari gets the request with the recipient already filled in.
+- **Stop it**: Left, **Payments** → **Stop this payment** → **Yes, stop it**.
+
 ## Tests
 
 ```bash
 npm test
 ```
 
-24 quick tests that run the real server on a temporary database and check the rules above.
+36 quick tests that run the real server on a temporary database and check the rules above.
 
 ## Team rules
 
